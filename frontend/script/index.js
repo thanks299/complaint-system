@@ -12,7 +12,7 @@ function loginSuccess() {
   // Get username and password from backend
   const username = document.getElementById('login-username').value;
   const password = document.getElementById('password').value;
-  fetch("/api/login", {
+    fetch(getApiUrl('LOGIN'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
