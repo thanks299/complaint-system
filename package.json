@@ -1,11 +1,16 @@
 {
-  "name": "complaint-backend",
+  "name": "complaint-system",
   "version": "1.0.0",
-  "description": "Backend for Complaint-project using Express.js",
+  "description": "NACOS Complaint Management System - Full Stack Application",
   "main": "backend/index.js",
   "scripts": {
     "start": "node backend/index.js",
-    "dev": "nodemon backend/index.js"
+    "dev": "nodemon backend/index.js",
+    "build": "echo 'Build completed'",
+    "vercel-build": "echo 'Vercel build completed'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -15,5 +20,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "keywords": ["complaint", "management", "system", "nacos", "express", "supabase"],
+  "author": "Your Name",
+  "license": "MIT"
 }

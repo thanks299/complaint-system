@@ -96,7 +96,7 @@ function togglePassword() {
 
     if (isValid) {
       // Send registration to backend
-      fetch("http://localhost:3001/api/registeration", {
+      fetch("/api/registeration", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -114,7 +114,7 @@
         // Save email to localStorage for user identification
         localStorage.setItem('email', emailField.value);
         // Send to backend
-        fetch("https://localhost:3001/api/complaintform", {
+        fetch("/api/complaintform", {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(complaintData)
@@ -151,7 +151,7 @@
     function loadMyComplaints() {
       const email = localStorage.getItem('email');
       if (!email) return;
-      fetch('http://localhost:3001/api/complaints')
+      fetch('/api/complaints')
         .then(res => res.json())
         .then(complaints => {
           const myComplaints = complaints.filter(c => c.email === email);
