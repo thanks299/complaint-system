@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registeration Complaint System</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="./styles/registeration.css">
+</head>
+<body>
+  <div class="container">
+    <div class="logo"><span><img src="assets/National-Open_University-Nigeria.png" alt="NACOSLogo"></span></div>
+    <header>
+      <h2>NACOS Complaint Management system</h2>
+      <p>Registration</p>
+    </header>
+
+    <form action="/api/registeration" method="POST" id="registerationForm">
+      <label for="firstname">First Name</label>
+      <input type="text" id="firstname" placeholder="Enter First Name">
+      <small id="firstnameError" class="error">First name is required</small>
+
+      <label for="lastname">Last Name</label>
+      <input type="text" id="lastname" placeholder="Enter Last Name">
+      <small id="lastnameError" class="error">Last name is required</small>
+
+      <label for="regno">Registration No</label>
+      <input type="text" id="regno" placeholder="Enter Registeration No">
+      <small id="regError" class="error">Enter a valid Registration No</small>
+
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Enter admin username">
+      <small id="usernameError" class="error">Username is required</small>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Enter email">
+      <small id="emailError" class="error">Enter a valid email</small>
+      <div class="Names">
+
+        <label for="password">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" placeholder="Enter password">
+          <span onclick="togglePassword()" class="eye">👁️</span>
+        </div>
+        <small id="passwordError" class="error">Password must be at least 6 characters</small>
+
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="password-container">
+          <input type="password" id="confirmPassword" placeholder="Re-enter password">
+          <span onclick="toggleComfirmPassword()" class="eye">👁️</span>
+        </div>
+        <small id="confirmError" class="error">Passwords do not match</small>
+
+        <div class="form-role">
+          <label for="role">Select Role</label>
+          <input type="text" style="width: 40%" id="role" name=" role">
+          <small id="roleError" class="error">Please select a role</small>
+        </div>
+        <div class="btn-container"><button type="submit" class="btn ">Register</button></div>
+         <div class="btn-direction">
+         <p><a href="/frontend/adminRegistration.html">Register as admin</a></p>   
+        </div>
+    </form>
+  </div>
+  <script src="/script/registration.js"></script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+body {
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #6c8e7a 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.container {
+  background-color: white;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  margin-top: 70px;
+  width: 100%;
+  max-width: 750px;
+  min-width: 320px;
+  height: auto;
+  min-height: 800px;
+  color: black;
+  border-radius: 20px;
+  padding: 60px 50px;
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(116, 147, 116, 0.2);
+}
+.logo {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo img {
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  animation: logo-bounce 1.2s infinite alternate;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes logo-bounce {
+  0% { transform: scale(1) translateY(0);}
+  60% { transform: scale(1.08) translateY(-10px);}
+  100% { transform: scale(1) translateY(0);}
+}
+
+header {
+  margin: 30px 10px;
+  display: block;
+  text-align: center;
+}
+
+.header {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+h4 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #666;
+}
+.form-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-top: 30px;
+  padding: 20px 40px;
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.label {
+  font-size: 20px;
+  font-weight: 600;
+  align-items: baseline;
+  color: #333;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-container input {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  margin-top: 8px;
+  border: 2px solid #e1e5e9;
+  padding: 20px 24px;
+  height: 20px;
+  box-sizing: border-box;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+.form-container input:focus {
+  outline: none;
+  border-color: #4a7c59;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.form-container input::placeholder {
+  color: #adb5bd;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.form-container p {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  color: #666;
+}
+
+.form-container p a {
+  text-decoration: none;
+  color: #4a7c59;
+  font-weight: 600;
+  margin-left: 5px;
+  transition: color 0.3s ease;
+}
+
+.form-container p a:hover {
+  color: #2d5016;
+  text-decoration: underline;
+}
+.password-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 25px;
+}
+
+.password-container input {
+  margin-bottom: 0;
+  padding-right: 50px;
+}
+
+.password-container span {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #adb5bd;
+  transition: color 0.3s ease;
+}
+
+.password-container span:hover {
+  color: #4a7c59;
+}
+
+.sub-btn {
+  width: 100%;
+  max-width: 500px;
+  height: 60px;
+  background: linear-gradient(135deg, #4a7c59 0%, #2d5016 100%);
+  color: white;
+  border-radius: 12px;
+  border: none;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(74, 124, 89, 0.3);
+}
+
+.sub-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 124, 89, 0.4);
+}
+
+.sub-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 100%;
+    min-height: 600px;
+    margin-top: 20px;
+    padding: 40px 30px;
+    border-radius: 15px;
+  }
+  
+  .logo img {
+    width: 85px;
+    height: 85px;
+  }
+  
+  .header {
+    font-size: 28px;
+  }
+  
+  h4 {
+    font-size: 17px;
+  }
+  
+  .label {
+    font-size: 18px;
+  }
+  
+  .form-container {
+    padding: 15px;
+  }
+  
+  .form-container input,
+  .password-container {
+    max-width: 100%;
+    padding: 18px 20px;
+    font-size: 16px;
+  }
+  
+  .sub-btn {
+    max-width: 100%;
+    height: 55px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 25px 20px;
+    margin-top: 10px;
+  }
+  
+  .logo img {
+    width: 65px;
+    height: 65px;
+  }
+  
+  .header {
+    font-size: 22px;
+  }
+  
+  h4 {
+    font-size: 15px;
+  }
+  
+  .form-container input {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  
+  .form-container input::placeholder {
+    font-size: 16px;
+  }
+  
+  .password-container span {
+    right: 12px;
+    font-size: 16px;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 481px) and (max-width: 768px) {
+  .container {
+    max-width: 600px;
+    min-height: 650px;
+    padding: 50px 40px;
+    margin: 15px auto;
+  }
+  
+  .logo img {
+    width: 95px;
+    height: 95px;
+  }
+  
+  .header {
+    font-size: 30px;
+  }
+  
+  h4 {
+    font-size: 18px;
+  }
+  
+  .form-container {
+    padding: 18px;
+  }
+  
+  .form-container input {
+    padding: 18px 22px;
+    font-size: 17px;
+  }
+  
+  .sub-btn {
+    height: 58px;
+    font-size: 19px;
+    max-width: 350px;
+  }
+}
+
+@media (min-width: 769px) {
+  .container {
+    max-width: 750px;
+    min-height: 800px;
+    padding: 60px 50px;
+  }
+  
+  .logo img {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .header {
+    font-size: 32px;
+  }
+  
+  h4 {
+    font-size: 20px;
+  }
+  
+  .form-container {
+    padding: 20px;
+  }
+  
+  .form-container input {
+    padding: 20px 24px;
+    font-size: 18px;
+  }
+  
+  .sub-btn {
+    height: 60px;
+    font-size: 20px;
+    max-width: 400px;
+  }
+}
+  
+  .header {
+    font-size: 36px;
+  }
+  
+h4 {
+  font-size: 22px;
+}

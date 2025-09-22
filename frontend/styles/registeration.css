@@ -1,0 +1,392 @@
+body {
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #6c8e7a 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.container {
+  background-color: white;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  padding: 60px;
+  width: 100%;
+  max-width: 850px;
+  min-width: 320px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(116, 147, 116, 0.2);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo img {
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  animation: logo-bounce 1.2s infinite alternate;
+}
+
+@keyframes logo-bounce {
+  0% { transform: scale(1) translateY(0);}
+  60% { transform: scale(1.08) translateY(-10px);}
+  100% { transform: scale(1) translateY(0);}
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+header h2 {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+header p {
+  font-size: 20px;
+  color: #666;
+  margin-top: 5px;
+  font-weight: 400;
+}
+
+label {
+  font-weight: 600;
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: 18px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 20px 24px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 18px;
+  box-sizing: border-box;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4a7c59;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+input::placeholder {
+  color: #adb5bd;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.password-container {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.password-container input {
+  padding-right: 50px;
+  margin-bottom: 0;
+}
+
+.password-container .eye {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #adb5bd;
+  transition: color 0.3s ease;
+}
+
+.password-container .eye:hover {
+  color: #4a7c59;
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 13px;
+  display: none;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.form-row {
+  display: flex;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.form-row > div {
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn {
+  width: 100%;
+  background: linear-gradient(135deg, #4a7c59 0%, #2d5016 100%);
+  color: white;
+  padding: 20px 24px;
+  border: none;
+  border-radius: 12px;
+  margin-top: 30px;
+  font-weight: 600;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(74, 124, 89, 0.3);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 124, 89, 0.4);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.btn-direction {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.btn-direction p {
+  margin: 0;
+  font-size: 16px;
+  color: #666;
+}
+
+.btn-direction a {
+  text-decoration: none;
+  color: #4a7c59;
+  font-weight: 600;
+  margin-left: 5px;
+  transition: color 0.3s ease;
+}
+
+.btn-direction a:hover {
+  color: #2d5016;
+  text-decoration: underline;
+}
+
+.form-role {
+  margin-top: 15px;
+}
+
+.form-role input {
+  max-width: 200px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 40px 30px;
+    border-radius: 15px;
+  }
+  
+  .logo img {
+    width: 85px;
+    height: 85px;
+  }
+  
+  header h2 {
+    font-size: 28px;
+  }
+  
+  header p {
+    font-size: 17px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .form-row > div {
+    min-width: 100%;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    padding: 18px 20px;
+    font-size: 16px;
+  }
+  
+  .btn {
+    width: 100%;
+    padding: 18px 22px;
+    font-size: 18px;
+  }
+  
+  input {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  
+  .password-container .eye {
+    right: 12px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 25px 20px;
+  }
+  
+  .logo img {
+    width: 65px;
+    height: 65px;
+  }
+  
+  header h2 {
+    font-size: 22px;
+  }
+  
+  header p {
+    font-size: 15px;
+  }
+  
+  label {
+    font-size: 15px;
+  }
+  
+  input {
+    font-size: 15px;
+  }
+  
+  input::placeholder {
+    font-size: 16px;
+  }
+  
+  .form-role input {
+    max-width: 100%;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 481px) and (max-width: 768px) {
+  .container {
+    max-width: 650px;
+    padding: 50px 40px;
+    margin: 15px auto;
+  }
+  
+  .logo img {
+    width: 95px;
+    height: 95px;
+  }
+  
+  header h2 {
+    font-size: 30px;
+  }
+  
+  header p {
+    font-size: 18px;
+  }
+  
+  .form-row {
+    padding: 18px;
+    gap: 15px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    padding: 18px 22px;
+    font-size: 17px;
+  }
+  
+  .btn {
+    padding: 18px 22px;
+    font-size: 19px;
+    max-width: 350px;
+    align-self: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .container {
+    max-width: 850px;
+    padding: 60px;
+  }
+  
+  .logo img {
+    width: 110px;
+    height: 110px;
+  }
+  
+  header h2 {
+    font-size: 32px;
+  }
+  
+  header p {
+    font-size: 20px;
+  }
+  
+  .form-row {
+    padding: 15px;
+    gap: 20px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    padding: 20px 24px;
+    font-size: 18px;
+  }
+  
+  .btn {
+    padding: 20px 24px;
+    font-size: 20px;
+    max-width: 400px;
+    align-self: center;
+  }
+}
+  
+  header p {
+    font-size: 22px;
+  }
+  
+.form-row > div {
+  min-width: 280px;
+}
