@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function fetchAndRenderComplaints() {
-              fetch(getApiUrl('COMPLAINTS'), {
+            fetch(getApiUrl('COMPLAINTS'))
                 .then(res => res.json())
                 .then(complaints => {
                     allComplaints = complaints;
