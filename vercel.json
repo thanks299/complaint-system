@@ -2,23 +2,46 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/index.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/index.js"
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg))",
+      "dest": "/frontend/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/registeration",
+      "dest": "/frontend/registeration.html"
+    },
+    {
+      "src": "/adminRegistration",
+      "dest": "/frontend/adminRegistration.html"
+    },
+    {
+      "src": "/complaintform",
+      "dest": "/frontend/complaintform.html"
+    },
+    {
+      "src": "/admindashboard",
+      "dest": "/frontend/admindashboard.html"
     },
     {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }
-  ],
-  "functions": {
-    "backend/index.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
