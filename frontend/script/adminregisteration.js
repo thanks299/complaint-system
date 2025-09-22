@@ -1,134 +1,89 @@
+function adminRegisteration() {
+  const username = document.getElementById('username').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
 
-// Toggle password visibility
-function togglePassword() {
-  let password = document.getElementById("password")
-  if (password.type === "password") {
-    password.type = "text";
-  }
-  else {
-    password.type = "password"
-  }
-}
-
-function toggleComfirmPassword() {
-  const confirmPassword = document.getElementById("confirmPassword");
-  if (confirmPassword.type === "password") {
-    confirmPassword.type = "text";
-  } else {
-    confirmPassword.type = "password";
-  }
-}
-
-//  elements variables
-const form = document.getElementById("adminRegisterForm")
-const fullname = document.getElementById("fullname");
-const username = document.getElementById("username");
-const email = document.getElementById("email");
-const password = document.getElementById("password");
-const confirmPassword = document.getElementById("confirmPassword");
-const role = document.getElementById("role");
-
-// Error message elements
-const fullnameError = document.getElementById("fullnameError");
-const usernameError = document.getElementById("usernameError");
-const emailError = document.getElementById("emailError");
-const passwordError = document.getElementById("passwordError");
-const confirmError = document.getElementById("confirmError");
-const roleError = document.getElementById("roleError")
-
-// form validation
-form.addEventListener("submit", function (e) {
-  e.preventDefault();
-  let isValid = true;
-
-  // Name validation
-  if (fullname.value.trim() === "") {
-    fullnameError.style.display = "block";
-    return isValid = false;
-  } else {
-    fullnameError.style.display = "none";
+  if (!username || !email || !password) {
+    swal("Error", "Please fill in all fields", "error");
+    return;
   }
 
-  // Username validation
-  if (username.value.trim() === "") {
-    usernameError.style.display = "block";
-    return isValid = false;
-  } else {
-    usernameError.style.display = "none";
-  }
+  // Show loading
+  swal("Registering admin...", {
+    buttons: false,
+    timer: 2000,
+  });
 
-  // Email validation
-  let emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,}$/;
-  if (!email.value.match(emailPattern)) {
-    emailError.style.display = "block";
-    return isValid = false;
-  } else {
-    emailError.style.display = "none";
-  }
-
-  // Password validation
-  if (password.value.length < 6) {
-    passwordError.style.display = "block";
-    return isValid = false;
-  }
-  else {
-    passwordError.style.display = "none";
-  }
-
-  // Password validation
-  if (confirmPassword.value !== password.value || confirmPassword.value === "") {
-    confirmError.style.display = "block";
-    return isValid = false;
-  }
-  else {
-    confirmError.style.display = "none";
-  }
-
-  if (role.value === "") {
-    roleError.style.display = 'block';
-    isValid = false;
-  } else {
-    roleError.style.display = "none";
-  }
-
-  //  Success Alert
-  if (isValid) {
-    fetch("/api/adminRegisteration", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value,
-        email: email.value
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error && data.error.includes('already registered')) {
-        Swal.fire({
-          icon: "error",
-          title: "Registration Failed",
-          text: data.error
-        });
-      } else {
-        Swal.fire({
-          icon: "success",
-          title: "Admin Registered",
-          text: "Registration successful! Redirecting to dashboard...",
-          timer: 2000,
-          showConfirmButton: false
-        }).then(() => {
-          window.location.href = "admindashboard.html";
-        });
-        form.reset();
-      }
-    })
-    .catch(() => {
-      Swal.fire({
-        icon: "error",
-        title: "Registration Failed",
-        text: "Could not connect to server. Try again."
+  // Make API call to Render backend
+  fetch(getApiUrl('ADMIN_REGISTER'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, email, password })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message && data.message.includes('successfully')) {
+      swal("Success!", "Admin registered successfully! Please login.", "success").then(() => {
+        window.location.href = 'index.html';
       });
+    } else {
+      swal("Error", data.error || "Admin registration failed", "error");
+    }
+  })
+  .catch(error => {
+    console.error('Admin registration error:', error);
+    swal("Error", "Could not connect to server. Please try again.", "error");
+  });
+}
+
+function togglePassword() {
+  const passwordField = document.getElementById('password');
+  if (passwordField.type === 'password') {
+    passwordField.type = 'text';
+  } else {
+    passwordField.type = 'password';
+  }
+}
+
+// Load complaints for admin dashboard
+function loadComplaints() {
+  fetch(getApiUrl('COMPLAINTS'))
+  .then(response => response.json())
+  .then(complaints => {
+    const complaintsContainer = document.getElementById('complaintsContainer');
+    if (complaintsContainer && complaints.length > 0) {
+      complaintsContainer.innerHTML = complaints.map(complaint => `
+        <div class="complaint-card">
+          <h3>${complaint.title}</h3>
+          <p><strong>Name:</strong> ${complaint.name}</p>
+          <p><strong>Matric:</strong> ${complaint.matric}</p>
+          <p><strong>Department:</strong> ${complaint.department}</p>
+          <p><strong>Details:</strong> ${complaint.details}</p>
+          <p><strong>Status:</strong> ${complaint.status}</p>
+          <p><strong>Date:</strong> ${new Date(complaint.created_at).toLocaleDateString()}</p>
+        </div>
+      `).join('');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading complaints:', error);
+  });
+}
+
+// Form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+  const adminRegisterForm = document.getElementById('adminRegisterForm');
+  if (adminRegisterForm) {
+    adminRegisterForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      adminRegisteration();
     });
+  }
+
+  // Load complaints if on admin dashboard
+  if (window.location.pathname.includes('admindashboard')) {
+    loadComplaints();
   }
 });

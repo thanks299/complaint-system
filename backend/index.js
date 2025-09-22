@@ -1,44 +1,39 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const app = express();
-app.use(cors());
 const PORT = process.env.PORT || 3001;
+
+// Enable CORS for all origins (important for Vercel frontend)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
-// Serve static files from the frontend folder
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-
-
-// Serve main pages
-app.get('/', (_, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-app.get('/admindashboard', (_, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'admindashboard.html'));
-});
-app.get('/adminRegisteration', (_, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'adminRegistration.html'));
-});
-app.get('/complaintform', (_, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'complaintform.html'));
-});
-app.get('/registeration', (_, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'registeration.html'));
-});
-
-
-// Use SQLite database
+// Use Supabase database
 const db = require('./db');
 
-// Handle admin dashboard actions (e.g., get all complaints)
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'NACOS Complaint Management API is running!', 
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // GET all complaints for admin dashboard
 app.get('/api/complaints', async (req, res) => {
   try {
-    const complaints = await db.all('SELECT * FROM complaints');
+    const { data: complaints, error } = await db
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
     res.json(complaints);
   } catch (error) {
     console.error('Error fetching complaints:', error);
@@ -55,18 +50,33 @@ app.post('/api/adminRegisteration', async (req, res) => {
   
   try {
     // Check if email exists in users
-    const userRow = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    const { data: userRow } = await db
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
     if (userRow) {
       return res.status(400).json({ error: 'Email is already registered as a student.' });
     }
     
     // Check if email or username exists in admins
-    const adminRow = await db.get('SELECT * FROM admins WHERE username = ? OR email = ?', [username, email]);
+    const { data: adminRow } = await db
+      .from('admins')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .single();
+    
     if (adminRow) {
       return res.status(400).json({ error: 'Email or username is already registered as an admin.' });
     }
     
-    const result = await db.run('INSERT INTO admins (username, password, email) VALUES (?, ?, ?)', [username, password, email]);
+    const { data, error } = await db
+      .from('admins')
+      .insert([{ username, password, email }])
+      .select();
+    
+    if (error) throw error;
     res.json({ message: 'Admin registered successfully', admin: { username, email } });
   } catch (error) {
     console.error('Error registering admin:', error);
@@ -80,13 +90,25 @@ app.post('/api/login', async (req, res) => {
   
   try {
     // Check admin
-    const admin = await db.get('SELECT * FROM admins WHERE (username = ? OR email = ?) AND password = ?', [username, username, password]);
+    const { data: admin } = await db
+      .from('admins')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${username}`)
+      .eq('password', password)
+      .single();
+    
     if (admin) {
       return res.json({ success: true, role: 'admin', username: admin.username });
     }
     
     // Check user
-    const user = await db.get('SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?', [username, username, password]);
+    const { data: user } = await db
+      .from('users')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${username}`)
+      .eq('password', password)
+      .single();
+    
     if (user) {
       return res.json({ success: true, role: 'user', username: user.username });
     }
@@ -107,22 +129,25 @@ app.post('/api/complaintform', async (req, res) => {
   }
   
   try {
-    const result = await db.run('INSERT INTO complaints (name, matric, email, department, title, details, status, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, matric, email, department, title, details, status || 'Pending', new Date().toISOString()]);
+    const { data, error } = await db
+      .from('complaints')
+      .insert([{
+        name,
+        matric,
+        email,
+        department,
+        title,
+        details,
+        status: status || 'pending',
+        date: new Date().toISOString()
+      }])
+      .select();
+    
+    if (error) throw error;
     
     res.json({ 
       message: 'Complaint submitted successfully', 
-      complaint: { 
-        id: result.lastID, 
-        name, 
-        matric, 
-        email, 
-        department, 
-        title, 
-        details, 
-        status: status || 'Pending', 
-        date: new Date().toISOString() 
-      } 
+      complaint: data[0]
     });
   } catch (error) {
     console.error('Error submitting complaint:', error);
@@ -132,25 +157,40 @@ app.post('/api/complaintform', async (req, res) => {
 
 // Handle user registration form submission
 app.post('/api/registeration', async (req, res) => {
-  const { username, password, email } = req.body;
-  if (!username || !password || !email) {
+  const { firstname, lastname, regno, email, username, password } = req.body;
+  if (!firstname || !lastname || !regno || !email || !username || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   
   try {
     // Check if email exists in admins
-    const adminRow = await db.get('SELECT * FROM admins WHERE email = ?', [email]);
+    const { data: adminRow } = await db
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
     if (adminRow) {
       return res.status(400).json({ error: 'Email is already registered as an admin.' });
     }
     
     // Check if email or username exists in users
-    const userRow = await db.get('SELECT * FROM users WHERE username = ? OR email = ?', [username, email]);
+    const { data: userRow } = await db
+      .from('users')
+      .select('*')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .single();
+    
     if (userRow) {
       return res.status(400).json({ error: 'Email or username is already registered as a student.' });
     }
     
-    const result = await db.run('INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)', [username, password, email, 'user']);
+    const { data, error } = await db
+      .from('users')
+      .insert([{ firstname, lastname, regno, email, username, password, role: 'user' }])
+      .select();
+    
+    if (error) throw error;
     res.json({ message: 'User registered successfully', user: { username, email } });
   } catch (error) {
     console.error('Error registering user:', error);
@@ -158,9 +198,9 @@ app.post('/api/registeration', async (req, res) => {
   }
 });
 
-
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`NACOS Complaint Management API is running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/`);
 });
 
-// module.exports = app;
+module.exports = app;

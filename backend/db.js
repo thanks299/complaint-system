@@ -97,10 +97,13 @@ const db = {
         const { data, error } = await supabase
           .from('users')
           .insert([{
-            username: params[0],
-            password: params[1],
-            email: params[2],
-            role: params[3]
+            firstname: params[0],
+            lastname: params[1],
+            regno: params[2],
+            email: params[3],
+            username: params[4],
+            password: params[5],
+            role: params[6]
           }])
           .select()
           .single();
