@@ -130,6 +130,10 @@ input::placeholder {
   margin-bottom: 10px;
 }
 
+.error.show {
+  display: block;
+}
+
 .form-row {
   display: flex;
   margin-bottom: 25px;
