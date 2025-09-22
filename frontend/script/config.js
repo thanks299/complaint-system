@@ -1,8 +1,6 @@
 // API Configuration
 const API_CONFIG = {
-  // Replace this with your actual Render URL after deployment
-  // Example: 'https://nacos-complaint-api.onrender.com'
-  BASE_URL: 'https://your-app-name.onrender.com',
+  BASE_URL: 'https://complaint-system-1os4.onrender.com',
   
   // For local development, uncomment the line below:
   // BASE_URL: 'http://localhost:3001',
