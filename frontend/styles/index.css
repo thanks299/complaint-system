@@ -1,29 +1,92 @@
 body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #6c8e7a 100%);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Main wrapper for two-column layout */
+.main-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Left Image Section */
+.image-section {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(45, 80, 22, 0.8), rgba(74, 124, 89, 0.6));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  color: white;
+}
+
+.image-overlay h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.image-overlay p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  max-width: 400px;
+}
+
+/* Right Form Section */
+.form-section {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
-  box-sizing: border-box;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
 .container {
   background-color: white;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  padding: 60px;
+  padding: 40px;
   width: 100%;
-  max-width: 850px;
+  max-width: 480px;
   min-width: 320px;
   border-radius: 20px;
   box-sizing: border-box;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(116, 147, 116, 0.2);
 }
+
 .logo {
-  margin-top: 30px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,26 +95,26 @@ body {
 
 .logo img {
   border-radius: 50%;
-  width: 110px;
-  height: 110px;
+  width: 80px;
+  height: 80px;
   animation: logo-bounce 1.2s infinite alternate;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes logo-bounce {
   0% { transform: scale(1) translateY(0);}
-  60% { transform: scale(1.08) translateY(-10px);}
+  60% { transform: scale(1.08) translateY(-5px);}
   100% { transform: scale(1) translateY(0);}
 }
 
 header {
-  margin: 30px 10px;
+  margin: 20px 10px;
   display: block;
   text-align: center;
 }
 
 .header {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: bold;
   color: #333;
   margin-bottom: 10px;
@@ -62,43 +125,31 @@ h4 {
   justify-content: center;
   align-items: center;
   margin-top: 10px;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 400;
   color: #666;
-}
-.form-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-top: 30px;
-  padding: 20px 40px;
-  border-radius: 15px;
-  background-color: rgba(255, 255, 255, 0.05);
+  text-align: center;
 }
 
 .label {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   align-items: baseline;
   color: #333;
   margin-bottom: 8px;
   width: 100%;
-  max-width: 500px;
 }
 
 .form-container input {
   width: 100%;
-  max-width: 500px;
-  border-radius: 12px;
-  margin-bottom: 25px;
-  margin-top: 8px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  margin-top: 6px;
   border: 2px solid #e1e5e9;
-  padding: 20px 24px;
-  height: 20px;
+  padding: 16px 20px;
+  height: 18px;
   box-sizing: border-box;
-  font-size: 18px;
+  font-size: 16px;
   transition: all 0.3s ease;
   background-color: #f8f9fa;
 }
@@ -112,7 +163,7 @@ h4 {
 
 .form-container input::placeholder {
   color: #adb5bd;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 400;
 }
 
@@ -121,7 +172,7 @@ h4 {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -137,11 +188,11 @@ h4 {
   color: #2d5016;
   text-decoration: underline;
 }
+
 .password-container {
   position: relative;
   width: 100%;
-  max-width: 500px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .password-container input {
@@ -155,7 +206,7 @@ h4 {
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   color: #adb5bd;
   transition: color 0.3s ease;
 }
@@ -166,13 +217,12 @@ h4 {
 
 .sub-btn {
   width: 100%;
-  max-width: 500px;
-  height: 60px;
+  height: 50px;
   background: linear-gradient(135deg, #4a7c59 0%, #2d5016 100%);
   color: white;
-  border-radius: 12px;
+  border-radius: 10px;
   border: none;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -189,168 +239,183 @@ h4 {
   transform: translateY(0);
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .main-wrapper {
+    flex-direction: column;
+  }
+  
+  .image-section {
+    flex: none;
+    min-height: 300px;
+    padding: 15px;
+  }
+  
+  .image-container {
+    max-width: 100%;
+    min-height: 250px;
+  }
+  
+  .image-overlay h2 {
+    font-size: 2rem;
+  }
+  
+  .image-overlay p {
+    font-size: 1rem;
+  }
+  
+  .form-section {
+    flex: none;
+    padding: 20px;
   }
   
   .container {
-    width: 100%;
+    max-width: 600px;
+    padding: 35px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-wrapper {
+    flex-direction: column;
+  }
+  
+  .image-section {
+    min-height: 250px;
+    padding: 10px;
+  }
+  
+  .image-container {
+    min-height: 200px;
+    border-radius: 15px;
+  }
+  
+  .image-overlay {
+    padding: 20px;
+  }
+  
+  .image-overlay h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+  
+  .image-overlay p {
+    font-size: 0.9rem;
+  }
+  
+  .form-section {
+    padding: 15px;
+  }
+  
+  .container {
     max-width: 100%;
-    min-height: 600px;
-    margin-top: 20px;
-    padding: 40px 30px;
+    padding: 25px 20px;
     border-radius: 15px;
   }
   
   .logo img {
-    width: 85px;
-    height: 85px;
+    width: 60px;
+    height: 60px;
   }
   
   .header {
-    font-size: 28px;
+    font-size: 20px;
   }
   
   h4 {
-    font-size: 17px;
-  }
-  
-  .label {
-    font-size: 18px;
+    font-size: 14px;
   }
   
   .form-container {
-    padding: 15px;
-  }
-  
-  .form-container input,
-  .password-container {
-    max-width: 100%;
-    padding: 18px 20px;
-    font-size: 16px;
-  }
-  
-  .sub-btn {
-    max-width: 100%;
-    height: 55px;
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 25px 20px;
-    margin-top: 10px;
-  }
-  
-  .logo img {
-    width: 65px;
-    height: 65px;
-  }
-  
-  .header {
-    font-size: 22px;
-  }
-  
-  h4 {
-    font-size: 15px;
+    padding: 20px 15px;
+    min-height: 300px;
   }
   
   .form-container input {
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 14px;
   }
   
-  .form-container input::placeholder {
-    font-size: 16px;
-  }
-  
-  .password-container span {
-    right: 12px;
-    font-size: 16px;
+  .sub-btn {
+    height: 45px;
+    font-size: 14px;
   }
 }
 
-/* Tablet breakpoint */
-@media (min-width: 481px) and (max-width: 768px) {
+/* Small Mobile */
+@media (max-width: 480px) {
+  .image-section {
+    min-height: 200px;
+    padding: 8px;
+  }
+  
+  .image-container {
+    min-height: 180px;
+    border-radius: 12px;
+  }
+  
+  .image-overlay h2 {
+    font-size: 1.5rem;
+  }
+  
+  .image-overlay p {
+    font-size: 0.8rem;
+  }
+  
   .container {
-    max-width: 600px;
-    min-height: 650px;
-    padding: 50px 40px;
-    margin: 15px auto;
+    padding: 20px 15px;
   }
   
   .logo img {
-    width: 95px;
-    height: 95px;
+    width: 50px;
+    height: 50px;
   }
   
   .header {
-    font-size: 30px;
+    font-size: 18px;
+  }
+  
+  h4 {
+    font-size: 12px;
+  }
+  
+  .form-container {
+    padding: 15px 10px;
+    min-height: 280px;
+  }
+  
+  .form-container input {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  
+  .sub-btn {
+    height: 42px;
+    font-size: 13px;
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 500px;
+    padding: 50px;
+  }
+  
+  .image-overlay h2 {
+    font-size: 3rem;
+  }
+  
+  .image-overlay p {
+    font-size: 1.3rem;
+  }
+  
+  .header {
+    font-size: 26px;
   }
   
   h4 {
     font-size: 18px;
   }
-  
-  .form-container {
-    padding: 18px;
-  }
-  
-  .form-container input {
-    padding: 18px 22px;
-    font-size: 17px;
-  }
-  
-  .sub-btn {
-    height: 58px;
-    font-size: 19px;
-    max-width: 350px;
-  }
-}
-
-@media (min-width: 769px) {
-  .container {
-    max-width: 750px;
-    min-height: 800px;
-    padding: 60px 50px;
-  }
-  
-  .logo img {
-    width: 110px;
-    height: 110px;
-  }
-  
-  .header {
-    font-size: 32px;
-  }
-  
-  h4 {
-    font-size: 20px;
-  }
-  
-  .form-container {
-    padding: 20px;
-  }
-  
-  .form-container input {
-    padding: 20px 24px;
-    font-size: 18px;
-  }
-  
-  .sub-btn {
-    height: 60px;
-    font-size: 20px;
-    max-width: 400px;
-  }
-}
-  
-  .header {
-    font-size: 36px;
-  }
-  
-h4 {
-  font-size: 22px;
 }

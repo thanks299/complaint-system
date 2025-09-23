@@ -7,28 +7,46 @@
   <link rel="stylesheet" href="./styles/index.css">
 </head>
 <body>
-  <div class="container">
-    <div class="logo" style="margin-bottom: 10px;"><span><img src="assets/National-Open_University-Nigeria.png" alt="NACOSLogo"></span></div>
-    <header style="margin-bottom: 5px;"><span class="header">NACOS COMPLAINT MANAGEMENT</span></header>
-    <h4 style="margin-top: 5px;">Send in your complaints we are listening!</h4>
-   <div class="form-container" style="margin-top: 10px;">
-    <form id="loginForm">
-      <div class="label"><label for="login-username">Username/Email</label></div>
-      <div>
-        <input type="text" id="login-username" placeholder="Username" required>
+  <div class="main-wrapper">
+    <!-- Left Image Section -->
+    <div class="image-section">
+      <div class="image-overlay">
+        <h2>Welcome to NACOS</h2>
+        <p>Your voice matters. We're here to listen and help resolve your concerns.</p>
+      </div>  
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="form-section">
+      <div class="container">
+        <div class="logo" style="margin-bottom: 10px;">
+          <span><img src="assets/National-Open_University-Nigeria.png" alt="NACOSLogo"></span>
+        </div>
+        <header style="margin-bottom: 5px;">
+          <span class="header">NACOS COMPLAINT</span>
+        </header>
+        <h4 style="margin-top: 5px;">Send in your complaints we are listening!</h4>
+        <div class="form-container" style="margin-top: 10px;">
+          <form id="loginForm">
+            <div class="label"><label for="login-username">Username/Email</label></div>
+            <div>
+              <input type="text" id="login-username" placeholder="Username" required>
+            </div>
+            <div class="label"><label for="password">Password</label></div>
+            <div class="password-container">
+              <input type="password" placeholder="password" id="password" required>
+              <span onclick="togglePassword()" style="cursor:pointer;">👁️</span>
+            </div>
+            <button class="sub-btn" type="submit">Login</button>
+            <div><p>Not registered? <a href="registeration.html">Register</a></p></div>
+          </form>
+        </div>
       </div>
-      <div class="label"><label for="password">Password</label></div>
-      <div class="password-container">
-        <input type="password" placeholder="password" id="password" required>
-        <span onclick="togglePassword()" style="cursor:pointer;">👁️</span>
-      </div>
-      <button class="sub-btn" type="submit">Login</button>
-      <div><p>Not registered? <a href="registeration.html">Register</a></p></div>
-    </form>
-   </div>
+    </div>
   </div>
+  
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="script/config.js"></script>
   <script src="script/index.js"></script>
 </body>
-</html> 
+</html>

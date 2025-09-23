@@ -4,66 +4,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registeration Complaint System</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Registration Complaint System</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="./styles/registeration.css">
 </head>
 <body>
-  <div class="container">
-    <div class="logo"><span><img src="assets/National-Open_University-Nigeria.png" alt="NACOSLogo"></span></div>
-    <header>
-      <h2>NACOS Complaint Management system</h2>
-      <p>Registration</p>
-    </header>
+  <div class="main-wrapper">
+    <!-- Left Image Section -->
+    <div class="image-section">
+      <div class="image-overlay">
+        <h2>Join NACOS Community</h2>
+        <p>Register now to be part of our community and make your voice heard. Together, we can create positive change.</p>
+      </div>
+    </div>
 
-    <form id="registerationForm">
-      <label for="firstname">First Name</label>
-      <input type="text" id="firstname" placeholder="Enter First Name">
-      <small id="firstnameError" class="error">First name is required</small>
-
-      <label for="lastname">Last Name</label>
-      <input type="text" id="lastname" placeholder="Enter Last Name">
-      <small id="lastnameError" class="error">Last name is required</small>
-
-      <label for="regno">Registration No</label>
-      <input type="text" id="regno" placeholder="Enter Registeration No">
-      <small id="regError" class="error">Enter a valid Registration No</small>
-
-      <label for="username">Username</label>
-      <input type="text" id="username" placeholder="Enter admin username">
-      <small id="usernameError" class="error">Username is required</small>
-
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="Enter email">
-      <small id="emailError" class="error">Enter a valid email</small>
-      <div class="Names">
-
-        <label for="password">Password</label>
-        <div class="password-container">
-          <input type="password" id="password" placeholder="Enter password">
-          <span onclick="togglePassword()" class="eye">👁️</span>
+    <!-- Right Form Section -->
+    <div class="form-section">
+      <div class="container">
+        <div class="logo">
+          <span><img src="assets/National-Open_University-Nigeria.png" alt="NACOSLogo"></span>
         </div>
-        <small id="passwordError" class="error">Password must be at least 6 characters</small>
+        <header>
+          <h2>NACOS Complaint Management System</h2>
+          <p>Registration</p>
+        </header>
 
-        <label for="confirmPassword">Confirm Password</label>
-        <div class="password-container">
-          <input type="password" id="confirmPassword" placeholder="Re-enter password">
-          <span onclick="toggleComfirmPassword()" class="eye">👁️</span>
-        </div>
-        <small id="confirmError" class="error">Passwords do not match</small>
+        <form id="registerationForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstname">First Name</label>
+              <input type="text" id="firstname" placeholder="Enter First Name" required>
+              <small id="firstnameError" class="error">First name is required</small>
+            </div>
+            <div class="form-group">
+              <label for="lastname">Last Name</label>
+              <input type="text" id="lastname" placeholder="Enter Last Name" required>
+              <small id="lastnameError" class="error">Last name is required</small>
+            </div>
+          </div>
 
-        <div class="form-role">
-          <label for="role">Select Role</label>
-          <input type="text" style="width: 40%" id="role" name=" role">
-          <small id="roleError" class="error">Please select a role</small>
-        </div>
-        <div class="btn-container"><button type="submit" class="btn ">Register</button></div>
-         <div class="btn-direction">
-         <p><a href="/frontend/adminRegistration.html">Register as admin</a></p>   
-        </div>
-    </form>
+          <div class="form-group">
+            <label for="regno">Registration No</label>
+            <input type="text" id="regno" placeholder="Enter Registration No" required>
+            <small id="regError" class="error">Enter a valid Registration No</small>
+          </div>
+
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username" required>
+            <small id="usernameError" class="error">Username is required</small>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter email" required>
+            <small id="emailError" class="error">Enter a valid email</small>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-container">
+              <input type="password" id="password" placeholder="Enter password" required>
+              <span onclick="togglePassword()" class="eye">👁️</span>
+            </div>
+            <small id="passwordError" class="error">Password must be at least 6 characters</small>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-container">
+              <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+              <span onclick="toggleConfirmPassword()" class="eye">👁️</span>
+            </div>
+            <small id="confirmError" class="error">Passwords do not match</small>
+          </div>
+
+          <div class="btn-container">
+            <button type="submit" class="btn">Register</button>
+          </div>
+          
+          <div class="btn-direction">
+            <p><a href="adminRegistration.html">Register as admin</a></p>   
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
-  <script src="/script/config.js"></script>
-  <script src="/script/registration.js"></script>
+
+  <script src="script/config.js"></script>
+  <script src="script/registeration.js"></script>
 </body>
 </html>
