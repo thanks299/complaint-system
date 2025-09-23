@@ -28,10 +28,6 @@
       "dest": "/frontend/registeration.html"
     },
     {
-      "src": "/adminRegistration",
-      "dest": "/frontend/adminRegistration.html"
-    },
-    {
       "src": "/complaintform",
       "dest": "/frontend/complaintform.html"
     },
@@ -43,5 +39,13 @@
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 10
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

@@ -1,39 +1,43 @@
-const db = require('../backend/db');
+const cors = require('cors');
+
+// CORS middleware
+const corsHandler = cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://complaint-system-nacos.vercel.app', 'https://*.vercel.app']
+    : ['http://localhost:3000', 'http://localhost:8000', 'http://127.0.0.1:5500'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+});
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  // Apply CORS
+  await new Promise((resolve, reject) => {
+    corsHandler(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { username, password } = req.body;
-  
-  try {
-    // Check admin
-    const admin = await db.get('SELECT * FROM admins WHERE (username = ? OR email = ?) AND password = ?', [username, username, password]);
-    if (admin) {
-      return res.json({ success: true, role: 'admin', username: admin.username });
-    }
-    
-    // Check user
-    const user = await db.get('SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?', [username, username, password]);
-    if (user) {
-      return res.json({ success: true, role: 'user', username: user.username });
-    }
-    
-    // Not registered
-    return res.json({ success: false });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ error: 'Login failed' });
+  if (req.method === 'GET') {
+    res.status(200).json({
+      message: 'NACOS Complaint Management API is running!',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'production',
+      endpoints: {
+        health: 'GET /api',
+        login: 'POST /api/login',
+        register: 'POST /api/registeration',
+        complaints: 'GET /api/complaints',
+        submitComplaint: 'POST /api/complaintform'
+      }
+    });
+  } else {
+    res.setHeader('Allow', ['GET']);
+    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 }

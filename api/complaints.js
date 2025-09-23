@@ -1,39 +1,56 @@
-const db = require('../backend/db');
+const { createClient } = require('@supabase/supabase-js');
+const cors = require('cors');
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+// CORS middleware
+const corsHandler = cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://complaint-system-nacos.vercel.app', 'https://*.vercel.app']
+    : ['http://localhost:3000', 'http://localhost:8000', 'http://127.0.0.1:5500'],
+  methods: ['GET'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+});
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+  // Apply CORS
+  await new Promise((resolve, reject) => {
+    corsHandler(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
-  if (req.method === 'GET') {
-    try {
-      const complaints = await db.all('SELECT * FROM complaints ORDER BY created_at DESC');
-      res.json(complaints);
-    } catch (error) {
-      console.error('Error fetching complaints:', error);
-      res.status(500).json({ error: 'Database error' });
+  try {
+    const { data: complaints, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Database error fetching complaints:', error);
+      return res.status(500).json({ 
+        error: 'Failed to fetch complaints',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
-  } else if (req.method === 'POST') {
-    const { name, matric, email, complaint, category } = req.body;
-    
-    try {
-      await db.run(
-        'INSERT INTO complaints (name, matric, email, complaint, category, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [name, matric, email, complaint, category, new Date().toISOString()]
-      );
-      
-      res.json({ success: true, message: 'Complaint submitted successfully' });
-    } catch (error) {
-      console.error('Error submitting complaint:', error);
-      res.status(500).json({ error: 'Failed to submit complaint' });
-    }
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
+
+    res.status(200).json(complaints || []);
+
+  } catch (error) {
+    console.error('Unexpected error fetching complaints:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
