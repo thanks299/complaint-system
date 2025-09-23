@@ -1,8 +1,8 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3001;
+require('dotenv').config();
 
 // Enable CORS for all origins (important for Vercel frontend)
 app.use(cors({
