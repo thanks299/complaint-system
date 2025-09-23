@@ -8,7 +8,7 @@ const API_CONFIG = {
   ENDPOINTS: {
     LOGIN: '/api/login',
     REGISTER: '/api/registeration',
-    ADMIN_REGISTER: '/api/adminRegisteration',
+    // ADMIN_REGISTER: '/api/adminRegisteration',
     COMPLAINTS: '/api/complaints',
     SUBMIT_COMPLAINT: '/api/complaintform'
   }

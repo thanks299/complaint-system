@@ -18,13 +18,39 @@ function toggleConfirmPassword() {
   }
 }
 
+function handleRoleChange() {
+  const role = document.getElementById('role').value;
+  const studentFields = document.getElementById('studentFields');
+  const firstnameInput = document.getElementById('firstname');
+  const lastnameInput = document.getElementById('lastname');
+  const regnoInput = document.getElementById('regno');
+  
+  if (role === 'admin') {
+    // Hide student-specific fields for admin
+    studentFields.style.display = 'none';
+    // Remove required attribute from student fields
+    firstnameInput.removeAttribute('required');
+    lastnameInput.removeAttribute('required');
+    regnoInput.removeAttribute('required');
+  } else if (role === 'student') {
+    // Show student-specific fields
+    studentFields.style.display = 'block';
+    // Add required attribute to student fields
+    firstnameInput.setAttribute('required', 'required');
+    lastnameInput.setAttribute('required', 'required');
+    regnoInput.setAttribute('required', 'required');
+  } else {
+    // Default: show student fields
+    studentFields.style.display = 'block';
+  }
+}
+
 function validateForm() {
-  const firstname = document.getElementById('firstname').value.trim();
-  const lastname = document.getElementById('lastname').value.trim();
-  const regno = document.getElementById('regno').value.trim();
+  const role = document.getElementById('role').value.trim();
   const username = document.getElementById('username').value.trim();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
 
   // Reset error displays
   document.querySelectorAll('.error').forEach(error => error.style.display = 'none');
@@ -32,42 +58,47 @@ function validateForm() {
   let isValid = true;
   let errorMessage = '';
 
-  // Validate firstname
-  if (!firstname) {
-    errorMessage = 'First name is required';
+  // Validate role
+  if (!role) {
+    errorMessage = 'Please select your role';
     isValid = false;
   }
-  // Validate lastname
-  else if (!lastname) {
-    errorMessage = 'Last name is required';
-    isValid = false;
+  // Validate student-specific fields
+  else if (role === 'student') {
+    const firstname = document.getElementById('firstname').value.trim();
+    const lastname = document.getElementById('lastname').value.trim();
+    const regno = document.getElementById('regno').value.trim();
+
+    if (!firstname) {
+      errorMessage = 'First name is required';
+      isValid = false;
+    } else if (!lastname) {
+      errorMessage = 'Last name is required';
+      isValid = false;
+    } else if (!regno) {
+      errorMessage = 'Registration number is required';
+      isValid = false;
+    }
   }
-  // Validate regno
-  else if (!regno) {
-    errorMessage = 'Registration number is required';
-    isValid = false;
-  }
-  // Validate username
-  else if (!username) {
+  
+  // Validate common fields
+  if (isValid && !username) {
     errorMessage = 'Username is required';
     isValid = false;
-  }
-  // Validate email
-  else if (!email) {
+  } else if (isValid && !email) {
     errorMessage = 'Email is required';
     isValid = false;
-  }
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  } else if (isValid && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errorMessage = 'Please enter a valid email address';
     isValid = false;
-  }
-  // Validate password
-  else if (!password) {
+  } else if (isValid && !password) {
     errorMessage = 'Password is required';
     isValid = false;
-  }
-  else if (password.length < 6) {
+  } else if (isValid && password.length < 6) {
     errorMessage = 'Password must be at least 6 characters long';
+    isValid = false;
+  } else if (isValid && password !== confirmPassword) {
+    errorMessage = 'Passwords do not match';
     isValid = false;
   }
 
@@ -87,27 +118,50 @@ function userRegistration() {
     return;
   }
 
-  const formData = {
-    firstname: document.getElementById('firstname').value.trim(),
-    lastname: document.getElementById('lastname').value.trim(),
-    regno: document.getElementById('regno').value.trim(),
-    username: document.getElementById('username').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value
+  const role = document.getElementById('role').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  let formData = {
+    username,
+    email,
+    password,
+    role
   };
+
+  let apiEndpoint;
+  let redirectPage;
+
+  // Determine API endpoint and redirect page based on role
+  if (role === 'student') {
+    const firstname = document.getElementById('firstname').value.trim();
+    const lastname = document.getElementById('lastname').value.trim();
+    const regno = document.getElementById('regno').value.trim();
+    
+    formData.firstname = firstname;
+    formData.lastname = lastname;
+    formData.regno = regno;
+    
+    apiEndpoint = getApiUrl('REGISTER');
+    redirectPage = 'complaintform.html';
+  } else if (role === 'admin') {
+    apiEndpoint = getApiUrl('ADMIN_REGISTER');
+    redirectPage = 'admindashboard.html';
+  }
 
   // Show loading
   Swal.fire({
     title: 'Registering...',
-    text: 'Please wait while we create your account',
+    text: `Please wait while we create your ${role} account`,
     allowOutsideClick: false,
     didOpen: () => {
       Swal.showLoading();
     }
   });
 
-  // Use the config function to get the API URL
-  fetch(getApiUrl('REGISTER'), {
+  // Make API call
+  fetch(apiEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -121,20 +175,26 @@ function userRegistration() {
     return response.json();
   })
   .then(data => {
-    console.log('Registration response:', data); // Debug log
+    console.log('Registration response:', data);
 
     if (data.message && data.message.includes('successfully')) {
+      // Store user info in localStorage
+      localStorage.setItem('role', role);
+      localStorage.setItem('username', username);
+      
       Swal.fire({
         icon: 'success',
         title: 'Registration Successful!',
-        text: 'Your account has been created successfully. You can now login.',
+        text: `Your ${role} account has been created successfully. Redirecting...`,
         timer: 3000,
         showConfirmButton: false
       }).then(() => {
         // Clear form
         document.getElementById('registerationForm').reset();
-        // Redirect to login
-        window.location.href = 'index.html';
+        handleRoleChange(); // Reset field visibility
+        
+        // Redirect based on role
+        window.location.href = redirectPage;
       });
     } else {
       Swal.fire({
@@ -145,7 +205,7 @@ function userRegistration() {
     }
   })
   .catch(error => {
-    console.error('Registration error:', error); // Debug log
+    console.error('Registration error:', error);
     Swal.fire({
       icon: 'error',
       title: 'Connection Error',
@@ -159,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const registrationForm = document.getElementById('registerationForm');
   if (registrationForm) {
     registrationForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // Prevent default form submission
+      e.preventDefault();
       userRegistration();
     });
   }
@@ -168,4 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.error').forEach(error => {
     error.style.display = 'none';
   });
+
+  // Initialize form state
+  handleRoleChange();
 });

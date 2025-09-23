@@ -12,9 +12,12 @@
   <div class="main-wrapper">
     <!-- Left Image Section -->
     <div class="image-section">
-      <div class="image-overlay">
-        <h2>Join NACOS Community</h2>
-        <p>Register now to be part of our community and make your voice heard. Together, we can create positive change.</p>
+      <div class="image-container">
+        <img src="assets/registration-illustration.jpg" alt="NACOS Registration" class="hero-image">
+        <div class="image-overlay">
+          <h2>Join NACOS Community</h2>
+          <p>Register now to be part of our community and make your voice heard. Together, we can create positive change.</p>
+        </div>
       </div>
     </div>
 
@@ -30,25 +33,40 @@
         </header>
 
         <form id="registerationForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="firstname">First Name</label>
-              <input type="text" id="firstname" placeholder="Enter First Name" required>
-              <small id="firstnameError" class="error">First name is required</small>
-            </div>
-            <div class="form-group">
-              <label for="lastname">Last Name</label>
-              <input type="text" id="lastname" placeholder="Enter Last Name" required>
-              <small id="lastnameError" class="error">Last name is required</small>
-            </div>
-          </div>
-
+          <!-- Role Selection -->
           <div class="form-group">
-            <label for="regno">Registration No</label>
-            <input type="text" id="regno" placeholder="Enter Registration No" required>
-            <small id="regError" class="error">Enter a valid Registration No</small>
+            <label for="role">Register as:</label>
+            <select id="role" required onchange="handleRoleChange()">
+              <option value="">Select your role</option>
+              <option value="student">Student</option>
+              <option value="admin">Admin</option>
+            </select>
+            <small id="roleError" class="error">Please select your role</small>
           </div>
 
+          <!-- Student Fields (shown by default) -->
+          <div id="studentFields">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstname">First Name</label>
+                <input type="text" id="firstname" placeholder="Enter First Name">
+                <small id="firstnameError" class="error">First name is required</small>
+              </div>
+              <div class="form-group">
+                <label for="lastname">Last Name</label>
+                <input type="text" id="lastname" placeholder="Enter Last Name">
+                <small id="lastnameError" class="error">Last name is required</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="regno">Registration No</label>
+              <input type="text" id="regno" placeholder="Enter Registration No">
+              <small id="regError" class="error">Enter a valid Registration No</small>
+            </div>
+          </div>
+
+          <!-- Common Fields -->
           <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" placeholder="Enter username" required>
@@ -84,7 +102,7 @@
           </div>
           
           <div class="btn-direction">
-            <p><a href="adminRegistration.html">Register as admin</a></p>   
+            <p>Already have an account? <a href="index.html">Login</a></p>   
           </div>
         </form>
       </div>

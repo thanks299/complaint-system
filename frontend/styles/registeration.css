@@ -305,6 +305,59 @@ input::placeholder {
   text-decoration: underline;
 }
 
+
+/* Add these styles to your existing registeration.css */
+
+/* Role Selection Styles */
+select {
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #e1e5e9;
+  padding: 14px 16px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 45px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #4a7c59;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+  transform: translateY(-1px);
+}
+
+select option {
+  padding: 10px;
+  background-color: white;
+  color: #333;
+}
+
+/* Smooth transitions for dynamic fields */
+#studentFields {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Mobile responsive for select */
+@media (max-width: 575px) {
+  select {
+    padding: 10px 12px;
+    font-size: 14px;
+    padding-right: 40px;
+    background-size: 18px;
+    background-position: right 10px center;
+  }
+}
+
 /* Large Desktop (1200px and up) */
 @media (min-width: 1200px) {
   .container {
