@@ -2,7 +2,7 @@
   "name": "complaint-system-backend",
   "version": "1.0.0",
   "description": "NACOS Complaint Management System Backend",
-  "main": "index.js",
+  "main": "backend/index.js",
   "scripts": {
     "start": "node backend/index.js",
     "dev": "nodemon backend/index.js",
