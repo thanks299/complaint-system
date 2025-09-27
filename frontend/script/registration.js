@@ -113,7 +113,7 @@ function validateForm() {
   return isValid;
 }
 
-function userRegistration() {
+async function userRegistration() {
   if (!validateForm()) {
     return;
   }
@@ -130,10 +130,7 @@ function userRegistration() {
     role
   };
 
-  let apiEndpoint;
-  let redirectPage;
-
-  // Determine API endpoint and redirect page based on role
+  // Add role-specific data
   if (role === 'student') {
     const firstname = document.getElementById('firstname').value.trim();
     const lastname = document.getElementById('lastname').value.trim();
@@ -142,12 +139,6 @@ function userRegistration() {
     formData.firstname = firstname;
     formData.lastname = lastname;
     formData.regno = regno;
-    
-    apiEndpoint = getApiUrl('REGISTER');
-    redirectPage = 'complaintform.html';
-  } else if (role === 'admin') {
-    apiEndpoint = getApiUrl('ADMIN_REGISTER');
-    redirectPage = 'admindashboard.html';
   }
 
   // Show loading
@@ -160,24 +151,15 @@ function userRegistration() {
     }
   });
 
-  // Make API call
-  fetch(apiEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('Registration response:', data);
+  try {
+    let response;
+    
+    // Call the unified registration method
+    response = await api.register(formData);
 
-    if (data.message && data.message.includes('successfully')) {
+    console.log('Registration response:', response);
+
+    if (response.message && response.message.includes('successfully')) {
       // Store user info in localStorage
       localStorage.setItem('role', role);
       localStorage.setItem('username', username);
@@ -194,24 +176,24 @@ function userRegistration() {
         handleRoleChange(); // Reset field visibility
         
         // Redirect based on role
+        const redirectPage = role === 'admin' ? 'admindashboard.html' : 'complaintform.html';
         window.location.href = redirectPage;
       });
     } else {
       Swal.fire({
         icon: 'error',
         title: 'Registration Failed',
-        text: data.error || 'Registration failed. Please try again.'
+        text: response.error || 'Registration failed. Please try again.'
       });
     }
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Registration error:', error);
     Swal.fire({
       icon: 'error',
       title: 'Connection Error',
       text: 'Could not connect to server. Please check your internet connection and try again.'
     });
-  });
+  }
 }
 
 // Form submission handler

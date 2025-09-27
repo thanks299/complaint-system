@@ -1,0 +1,219 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 2rem;
+    background-color: #f5f5f5;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem; /* Increased spacing */
+    background: white;
+    padding: 2rem; /* Increased padding */
+    border-radius: 10px; /* Slightly more rounded */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12); /* Slightly stronger shadow */
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem; /* Increased gap */
+}
+
+.search-bar {
+    padding: 0.75rem 1.25rem; /* Increased padding */
+    border-radius: 24px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    width: 280px; /* Slightly wider */
+    outline: none;
+}
+
+.search-bar:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+#logoutBtn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem; /* Increased padding */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+    margin-left: 1rem; /* Added spacing from other elements */
+}
+
+#logoutBtn:hover {
+    background: #c82333;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Slightly wider cards */
+    gap: 1.5rem; /* Increased gap */
+    margin-bottom: 2.5rem; /* Increased spacing */
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem; /* Increased padding */
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.25rem; /* Slightly larger */
+    font-weight: bold;
+    color: #007bff;
+}
+
+.complaints-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    overflow: hidden;
+    margin-bottom: 2rem; /* Added spacing below */
+}
+
+.section-header {
+    padding: 2rem; /* Increased padding */
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    margin: 0;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem; /* Added spacing below table */
+}
+
+th, td {
+    padding: 1.25rem; /* Increased padding */
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 0.35rem 1rem; /* Increased padding */
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-in-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-resolved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.action-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem; /* Increased padding */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin: 0 0.4rem; /* Increased margin */
+    transition: background 0.2s;
+}
+
+.action-btn:hover {
+    background: #0056b3;
+}
+
+.action-btn.delete {
+    background: #dc3545;
+}
+
+.action-btn.delete:hover {
+    background: #c82333;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 3.5rem; /* Increased padding */
+    color: #6c757d;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1.25rem; /* Increased padding */
+    border-radius: 6px;
+    margin-bottom: 1.5rem; /* Increased margin */
+    border: 1px solid #f5c6cb;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3.5rem; /* Increased padding */
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1.5rem; /* Increased gap */
+        text-align: center;
+        padding: 1.25rem; /* Adjusted padding */
+    }
+
+    .search-container {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .search-bar {
+        width: 100%;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    table {
+        font-size: 0.95rem;
+    }
+
+    th, td {
+        padding: 0.75rem; /* Increased padding for mobile */
+    }
+}
