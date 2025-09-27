@@ -35,15 +35,86 @@ const authLimiter = rateLimit({
 
 app.use(limiter);
 
-// Enhanced CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://complaint-system-umber.vercel.app/', 'https://*.vercel.app']
-    : ['http://localhost:3000', 'http://localhost:8000', 'http://127.0.0.1:5500'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// Enhanced CORS configuration - FIXED
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'https://complaint-system-umber.vercel.app',
+      // Add more specific Vercel domains if needed
+      'https://complaint-system-git-main-yourusername.vercel.app'
+    ];
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Check if origin matches vercel.app pattern
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Allow localhost on any port for development
+    if (origin.match(/^http:\/\/localhost:\d+$/)) {
+      return callback(null, true);
+    }
+    
+    const msg = `CORS policy does not allow access from origin: ${origin}`;
+    return callback(new Error(msg), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Add explicit CORS headers middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Allow specific origins
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5500', 
+    'http://127.0.0.1:5500',
+    'https://complaint-system-umber.vercel.app'
+  ];
+  
+  if (allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -79,7 +150,18 @@ app.get('/', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: 'enabled'
+  });
+});
+
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.status(200).json({
+    message: 'CORS is working!',
+    origin: req.headers.origin,
+    method: req.method,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -88,8 +170,10 @@ app.get('/api/status', (req, res) => {
   res.status(200).json({
     api: 'NACOS Complaint System',
     status: 'operational',
+    cors: 'configured',
     endpoints: {
       health: 'GET /',
+      corsTest: 'GET /api/cors-test',
       login: 'POST /api/login',
       register: 'POST /api/registeration',
       adminRegister: 'POST /api/adminRegisteration',
@@ -235,6 +319,7 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
 
     console.log('User registered successfully:', { username, email, role });
     res.status(201).json({ 
+      success: true,
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`, 
       user: data[0] 
     });
@@ -245,109 +330,21 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
   }
 }));
 
-// Handle admin registration
-// app.post('/api/adminRegisteration', asyncHandler(async (req, res) => {
-//   let { username, email, password } = req.body;
-
-//   // Sanitize inputs
-//   username = sanitizeInput(username);
-//   email = sanitizeInput(email);
-
-//   // Validation
-//   const errors = [];
-  
-//   if (!username || username.length < 3) {
-//     errors.push('Username must be at least 3 characters long');
-//   }
-//   if (!email || !validateEmail(email)) {
-//     errors.push('Please provide a valid email address');
-//   }
-//   if (!validatePassword(password)) {
-//     errors.push('Password must be at least 6 characters long');
-//   }
-
-//   if (errors.length > 0) {
-//     return res.status(400).json({ 
-//       error: 'Validation failed', 
-//       details: errors 
-//     });
-//   }
-
-//   try {
-//     // Hash password
-//     const saltRounds = 12;
-//     const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-//     // Check for existing admin
-//     const { data: existingAdmin, error: checkError } = await db
-//       .from('users')
-//       .select('username, email')
-//       .or(`username.eq.${username},email.eq.${email}`)
-//       .single();
-
-//     if (checkError && checkError.code !== 'PGRST116') {
-//       console.error('Database error checking existing admin:', checkError);
-//       return res.status(500).json({ error: 'Database error during validation' });
-//     }
-
-//     if (existingAdmin) {
-//       const field = existingAdmin.username === username ? 'username' : 'email';
-//       return res.status(409).json({ 
-//         error: `An admin with this ${field} already exists` 
-//       });
-//     }
-
-//     // Insert new admin
-//     const { data, error } = await db
-//       .from('users')
-//       .insert([{ 
-//         username: username.toLowerCase(), 
-//         email: email.toLowerCase(), 
-//         password: hashedPassword,
-//         role: 'admin',
-//         created_at: new Date().toISOString()
-//       }])
-//       .select('id, username, email, role, created_at');
-
-//     if (error) {
-//       console.error('Supabase admin insert error:', error);
-      
-//       if (error.code === '23505') {
-//         return res.status(409).json({ 
-//           error: 'Admin already exists',
-//           details: error.details
-//         });
-//       }
-      
-//       return res.status(500).json({ 
-//         error: 'Failed to create admin account',
-//         details: process.env.NODE_ENV === 'development' ? error.message : undefined
-//       });
-//     }
-
-//     console.log('Admin registered successfully:', { username, email });
-//     res.status(201).json({ 
-//       message: 'Admin registered successfully', 
-//       admin: data[0] 
-//     });
-
-//   } catch (error) {
-//     console.error('Admin registration process error:', error);
-//     res.status(500).json({ error: 'Internal server error during admin registration' });
-//   }
-// }));
-
 // Handle login
 app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
-  let { username, password } = req.body;
+  let { username, password, email } = req.body;
 
+  // Support both username and email login
+  const loginField = username || email;
+  
   // Sanitize inputs
-  username = sanitizeInput(username);
+  const sanitizedLogin = sanitizeInput(loginField);
 
   // Validation
-  if (!username || !password) {
+  if (!sanitizedLogin || !password) {
     return res.status(400).json({ 
-      error: 'Username and password are required' 
+      success: false,
+      error: 'Username/email and password are required' 
     });
   }
 
@@ -356,11 +353,11 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
     const { data: user, error } = await db
       .from('users')
       .select('*')
-      .or(`username.eq.${username.toLowerCase()},email.eq.${username.toLowerCase()}`)
+      .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
       .single();
 
     if (error || !user) {
-      console.log('Login attempt failed - user not found:', username);
+      console.log('Login attempt failed - user not found:', sanitizedLogin);
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid username or password' 
@@ -371,7 +368,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     
     if (!isValidPassword) {
-      console.log('Login attempt failed - invalid password:', username);
+      console.log('Login attempt failed - invalid password:', sanitizedLogin);
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid username or password' 
@@ -390,7 +387,14 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
       success: true,
       role: user.role,
       username: user.username,
-      message: 'Login successful'
+      userId: user.id,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
     });
 
   } catch (error) {
@@ -404,7 +408,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
 
 // Handle complaint form submission
 app.post('/api/complaintform', asyncHandler(async (req, res) => {
-  let { name, matric, email, department, title, details } = req.body;
+  let { name, matric, email, department, title, details, username, userId } = req.body;
 
   // Sanitize inputs
   name = sanitizeInput(name);
@@ -413,6 +417,7 @@ app.post('/api/complaintform', asyncHandler(async (req, res) => {
   department = sanitizeInput(department);
   title = sanitizeInput(title);
   details = sanitizeInput(details);
+  username = sanitizeInput(username);
 
   // Validation
   const errors = [];
@@ -445,18 +450,24 @@ app.post('/api/complaintform', asyncHandler(async (req, res) => {
 
   try {
     // Insert new complaint
+    const complaintData = { 
+      name, 
+      matric, 
+      email: email.toLowerCase(), 
+      department, 
+      title, 
+      details,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    // Add user info if provided
+    if (username) complaintData.username = username;
+    if (userId) complaintData.user_id = userId;
+
     const { data, error } = await db
       .from('complaints')
-      .insert([{ 
-        name, 
-        matric, 
-        email: email.toLowerCase(), 
-        department, 
-        title, 
-        details,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      }])
+      .insert([complaintData])
       .select();
 
     if (error) {
@@ -469,13 +480,98 @@ app.post('/api/complaintform', asyncHandler(async (req, res) => {
 
     console.log('Complaint submitted successfully:', { title, email });
     res.status(201).json({ 
+      success: true,
       message: 'Complaint submitted successfully', 
-      complaint: data[0] 
+      complaint: data[0],
+      id: data[0].id
     });
 
   } catch (error) {
     console.error('Complaint submission process error:', error);
-    res.status(500).json({ error: 'Internal server error during complaint submission' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error during complaint submission' 
+    });
+  }
+}));
+
+// Update complaint status (for admin)
+app.patch('/api/complaints/:id/status', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const validStatuses = ['pending', 'in-progress', 'resolved'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ 
+      error: 'Invalid status. Must be one of: pending, in-progress, resolved' 
+    });
+  }
+
+  try {
+    const { data, error } = await db
+      .from('complaints')
+      .update({ 
+        status: status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Database error updating complaint status:', error);
+      return res.status(500).json({ 
+        error: 'Failed to update complaint status' 
+      });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ 
+        error: 'Complaint not found' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true,
+      message: `Complaint status updated to ${status}`, 
+      complaint: data[0] 
+    });
+  } catch (error) {
+    console.error('Error updating complaint status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}));
+
+// Delete complaint (for admin)
+app.delete('/api/complaints/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await db
+      .from('complaints')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Database error deleting complaint:', error);
+      return res.status(500).json({ 
+        error: 'Failed to delete complaint' 
+      });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ 
+        error: 'Complaint not found' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true,
+      message: 'Complaint deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting complaint:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }));
 
@@ -487,11 +583,13 @@ app.use('*', (req, res) => {
     availableEndpoints: [
       'GET /',
       'GET /api/status',
+      'GET /api/cors-test',
       'GET /api/complaints',
       'POST /api/login',
       'POST /api/registeration',
-      'POST /api/adminRegisteration',
-      'POST /api/complaintform'
+      'POST /api/complaintform',
+      'PATCH /api/complaints/:id/status',
+      'DELETE /api/complaints/:id'
     ]
   });
 });
@@ -520,7 +618,9 @@ app.listen(PORT, () => {
   console.log(`🚀 NACOS Complaint Management API is running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/`);
   console.log(`📊 API status: http://localhost:${PORT}/api/status`);
+  console.log(`🔧 CORS test: http://localhost:${PORT}/api/cors-test`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔐 CORS enabled for Vercel domains`);
 });
 
 module.exports = app;
