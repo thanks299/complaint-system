@@ -2,10 +2,16 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 console.log('🔧 Initializing Supabase connection...');
+console.log('📂 Current directory:', __dirname);
+console.log('📂 Process cwd:', process.cwd());
 
 // Environment variables validation
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+console.log('Environment check:');
+console.log('- SUPABASE_URL:', supabaseUrl ? `✅ ${supabaseUrl}` : '❌ Missing');
+console.log('- SUPABASE_ANON_KEY:', supabaseKey ? `✅ ${supabaseKey.substring(0, 20)}...` : '❌ Missing');
 
 console.log('Environment check:');
 console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
