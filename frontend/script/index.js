@@ -1,3 +1,12 @@
+// Error message constants
+const ERROR_MESSAGES = {
+  MISSING_FIELDS: "Please enter both username/email and password",
+  INVALID_CREDENTIALS: "Invalid username/email or password.",
+  TOO_MANY_ATTEMPTS: "Too many login attempts. Please try again later.",
+  SERVER_ERROR: "Server error. Please try again later.",
+  CONNECTION_ERROR: "Could not connect to server. Please check your internet connection and try again."
+};
+
 function togglePassword() {  
   let password = document.getElementById("password");
   if (password.type === "password") {
@@ -5,6 +14,22 @@ function togglePassword() {
   } else {
     password.type = "password"; 
   }
+}
+
+// Enhanced error handling wrapper
+function withErrorHandling(asyncFunction) {
+  return async function(...args) {
+    try {
+      return await asyncFunction.apply(this, args);
+    } catch (error) {
+      console.error('Error in', asyncFunction.name, ':', error);
+      Swal.fire({
+        icon: "error",
+        title: "Unexpected Error",
+        text: "Something went wrong. Please refresh the page and try again."
+      });
+    }
+  };
 }
 
 // SweetAlert success popup and login logic
@@ -18,16 +43,17 @@ async function loginSuccess() {
     Swal.fire({
       icon: "error",
       title: "Missing Fields",
-      text: "Please enter both username/email and password"
+      text: ERROR_MESSAGES.MISSING_FIELDS
     });
     return;
   }
 
-  // Show loading
-  Swal.fire({
-    title: "Logging in...",
+  // Show loading with better UX
+  const loadingSwal = Swal.fire({
+    title: "Signing you in...",
     text: "Please wait while we verify your credentials",
     allowOutsideClick: false,
+    showConfirmButton: false,
     didOpen: () => {
       Swal.showLoading();
     }
@@ -43,62 +69,69 @@ async function loginSuccess() {
 
     // Make API call using the new api service
     const response = await api.loginUser(loginData);
-
+    
     console.log('Login response:', response); // Debug log
 
-    if (response.success || response.message === 'Login successful') {
-      // Store user info in localStorage
-      localStorage.setItem('role', response.role || response.user?.role);
-      localStorage.setItem('username', response.username || response.user?.username);
-      localStorage.setItem('userId', response.userId || response.user?.id);
+    // Enhanced response checking
+    const isSuccess = response.success || 
+                     response.message === 'Login successful' ||
+                     response.status === 'success' ||
+                     (response.user && response.token);
 
-      // Store auth token if provided
-      if (response.token) {
-        localStorage.setItem('authToken', response.token);
-      }
+    if (isSuccess) {
+      // Store user info in localStorage with better data handling
+      const userRole = response.role || response.user?.role || 'student';
+      const username = response.username || response.user?.username || usernameOrEmail;
+      const userId = response.userId || response.user?.id;
 
-      const userRole = response.role || response.user?.role;
-    
+      localStorage.setItem('role', userRole);
+      localStorage.setItem('username', username);
+      
+      if (userId) localStorage.setItem('userId', userId);
+      if (response.token) localStorage.setItem('authToken', response.token);
+
+      // Close loading and show success
+      loadingSwal.close();
+      
       Swal.fire({
         icon: "success",
-        title: "Login Successful",
-        text: userRole === 'admin' ? "Redirecting to Admin Dashboard..." : "Redirecting to your Complaint Form...",
+        title: "Welcome back!",
+        text: userRole === 'admin' ? "Redirecting to Admin Dashboard..." : "Redirecting to Complaint Form...",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
+        timerProgressBar: true
       }).then(() => {
         // Clear form
-        document.getElementById('login-username').value = '';
-        document.getElementById('password').value = '';
+        clearLoginForm();
         
         // Redirect based on role
-        if (userRole === 'admin') {
-          window.location.href = "admindashboard.html";
-        } else {
-          window.location.href = "complaintform.html";
-        }
+        const redirectPage = userRole === 'admin' ? "admindashboard.html" : "complaintform.html";
+        window.location.href = redirectPage;
       });
     } else {
+      loadingSwal.close();
       Swal.fire({
         icon: "warning",
         title: "Login Failed",
-        text: response.error || response.message || "Invalid credentials. Please check your username/email and password.",
+        text: response.error || response.message || ERROR_MESSAGES.INVALID_CREDENTIALS,
         showConfirmButton: true
       });
     }
   } catch (error) {
-    console.error('Login error:', error); // Debug log
+    console.error('Login error:', error);
+    loadingSwal.close();
     
-    let errorMessage = "Could not connect to server. Please check your internet connection and try again.";
+    let errorMessage = ERROR_MESSAGES.CONNECTION_ERROR;
     
     // Handle specific error messages
     if (error.message.includes('401')) {
-      errorMessage = "Invalid username/email or password.";
+      errorMessage = ERROR_MESSAGES.INVALID_CREDENTIALS;
     } else if (error.message.includes('429')) {
-      errorMessage = "Too many login attempts. Please try again later.";
+      errorMessage = ERROR_MESSAGES.TOO_MANY_ATTEMPTS;
     } else if (error.message.includes('500')) {
-      errorMessage = "Server error. Please try again later.";
+      errorMessage = ERROR_MESSAGES.SERVER_ERROR;
     }
-
+    
     Swal.fire({
       icon: "error",
       title: "Login Error",
@@ -107,8 +140,17 @@ async function loginSuccess() {
   }
 }
 
-// Handle login form submit
-document.addEventListener('DOMContentLoaded', function() {
+// Utility function to clear login form
+function clearLoginForm() {
+  const usernameField = document.getElementById('login-username');
+  const passwordField = document.getElementById('password');
+  
+  if (usernameField) usernameField.value = '';
+  if (passwordField) passwordField.value = '';
+}
+
+// Enhanced login form handling
+function setupLoginForm() {
   const loginForm = document.querySelector('form');
   if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
@@ -117,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Add Enter key support for login
+  // Add Enter key support for better UX
   document.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
       const activeElement = document.activeElement;
@@ -127,82 +169,57 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
-});
+}
 
-// Optional: Check if user is already logged in
+// Enhanced login status check
 function checkLoginStatus() {
   const role = localStorage.getItem('role');
   const username = localStorage.getItem('username');
   
   if (role && username) {
-    // User is already logged in, redirect to appropriate page
-    if (role === 'admin') {
-      window.location.href = 'admindashboard.html';
-    } else {
-      window.location.href = 'complaintform.html';
-    }
+    // User is already logged in, show confirmation before redirect
+    Swal.fire({
+      title: 'Already Logged In',
+      text: `You're already logged in as ${username}. Redirect to your dashboard?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, go to dashboard',
+      cancelButtonText: 'Stay here'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const redirectPage = role === 'admin' ? 'admindashboard.html' : 'complaintform.html';
+        window.location.href = redirectPage;
+      }
+    });
   }
 }
 
-checkLoginStatus();
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  setupLoginForm();
+  
+  // Only check login status if user wants auto-redirect
+  // checkLoginStatus(); // Uncomment if you want auto-redirect behavior
+});
 
-//   // Make API call using config
-//   fetch(getApiUrl('LOGIN'), {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({ username, password })
-//   })
-//   .then(response => {
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-//     return response.json();
-//   })
-//   .then(data => {
-//     console.log('Login response:', data); // Debug log
+// Enhanced logout function
+function logout() {
+  Swal.fire({
+    title: 'Logout',
+    text: 'Are you sure you want to logout?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, logout'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      api.logout(false);
+    }
+  });
+}
 
-//     if (data.success) {
-//       localStorage.setItem('role', data.role);
-//       localStorage.setItem('username', data.username);
-//       Swal.fire({
-//         icon: "success",
-//         title: "Login Successful",
-//         text: data.role === 'admin' ? "Redirecting to Admin Dashboard..." : "Redirecting to your Complaint Form...",
-//         timer: 2000,
-//         showConfirmButton: false
-//       }).then(() => {
-//         if (data.role === 'admin') {
-//           window.location.href = "admindashboard.html";
-//         } else {
-//           window.location.href = "complaintform.html";
-//         }
-//       });
-//     } else {
-//       Swal.fire({
-//         icon: "warning",
-//         title: "Login Failed",
-//         text: "Invalid username or password. Please check your credentials and try again.",
-//         showConfirmButton: true
-//       });
-//     }
-//   })
-//   .catch(error => {
-//     console.error('Login error:', error); // Debug log
-//     Swal.fire({
-//       icon: "error",
-//       title: "Connection Error",
-//       text: "Could not connect to server. Please check your internet connection and try again."
-//     });
-//   });
-// }
-
-// // Handle login form submit
-// document.addEventListener('DOMContentLoaded', function() {
-//   const loginForm = document.querySelector('form');
-//   if (loginForm) {
-//     loginForm.addEventListener('submit', function(e) {
-//       e.preventDefault();
-//       loginSuccess();
-//     });
-//   }
-// });
+// Export functions for use in other files if needed
+window.loginHelpers = {
+  clearLoginForm,
+  checkLoginStatus,
+  logout
+};
