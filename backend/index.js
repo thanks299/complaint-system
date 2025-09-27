@@ -38,7 +38,7 @@ app.use(limiter);
 // Enhanced CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://complaint-system-nacos.vercel.app', 'https://*.vercel.app']
+    ? ['https://complaint-system-umber.vercel.app/', 'https://*.vercel.app']
     : ['http://localhost:3000', 'http://localhost:8000', 'http://127.0.0.1:5500'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
