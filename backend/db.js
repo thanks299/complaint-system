@@ -1,7 +1,14 @@
 const supabase = require('./supabase-config');
 
-// Database helper functions for Supabase
-const db = {
+console.log('🔧 Loading database module...');
+console.log('Supabase client type:', typeof supabase);
+console.log('Supabase has from method:', typeof supabase?.from);
+
+// Export the Supabase client directly for modern usage
+module.exports = supabase;
+
+// Also export the legacy wrapper for backward compatibility
+module.exports.legacy = {
   // Get all records from a table
   async all(query, params = []) {
     try {
@@ -137,4 +144,5 @@ const db = {
   }
 };
 
-module.exports = db;
+console.log('✅ Database module loaded successfully');
+console.log('Exported Supabase client with from method:', typeof module.exports.from);
