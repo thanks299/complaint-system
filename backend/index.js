@@ -431,7 +431,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
 }));
 
 // Handle user registration (same database checks)
-app.post('/api/registeration', asyncHandler(async (req, res) => {
+app.post('/api/registration', asyncHandler(async (req, res) => {
   // Check database connection first
   if (!db || typeof db.from !== 'function') {
     return res.status(500).json({ 
@@ -457,6 +457,7 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
     errors.push('Please select a valid role (student or admin)');
   }
   
+  // Student-specific validation
   if (role === 'student') {
     if (!firstname || firstname.length < 2) {
       errors.push('First name must be at least 2 characters long');
@@ -469,6 +470,7 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
     }
   }
 
+  // Common validation for both roles
   if (!email || !validateEmail(email)) {
     errors.push('Please provide a valid email address');
   }
@@ -487,18 +489,21 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
   }
 
   try {
-    console.log('Starting registration process for:', username);
+    console.log('Starting registration process for:', username, 'as', role);
     
     // Hash password
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Check for existing user
+    // ✅ FIX: Check appropriate table based on role
+    const tableName = role === 'admin' ? 'admins' : 'users';
+    
+    // Check for existing user in appropriate table
     const { data: existingUser, error: checkError } = await db
-      .from('users')
+      .from(tableName)
       .select('username, email')
       .or(`username.eq.${username.toLowerCase()},email.eq.${email.toLowerCase()}`)
-      .maybeSingle(); // Use maybeSingle instead of single
+      .maybeSingle();
 
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Database error checking existing user:', checkError);
@@ -511,55 +516,80 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
     if (existingUser) {
       const field = existingUser.username === username.toLowerCase() ? 'username' : 'email';
       return res.status(409).json({ 
-        error: `A user with this ${field} already exists` 
+        error: `A ${role} with this ${field} already exists` 
       });
     }
 
-    // Prepare user data
-    let userData = {
-      username: username.toLowerCase(), 
-      email: email.toLowerCase(), 
-      password: hashedPassword,
-      role: role,
-      created_at: new Date().toISOString()
-    };
-
-    if (role === 'student') {
-      userData.firstname = firstname;
-      userData.lastname = lastname;
-      userData.regno = regno;
+    // ✅ FIX: Prepare data based on role and table schema
+    let userData;
+    
+    if (role === 'admin') {
+      // Admin data (for admins table)
+      userData = {
+        username: username.toLowerCase(), 
+        email: email.toLowerCase(), 
+        password: hashedPassword,
+        created_at: new Date().toISOString()
+      };
+    } else {
+      // Student data (for users table)
+      userData = {
+        firstname,
+        lastname,
+        regno,
+        username: username.toLowerCase(), 
+        email: email.toLowerCase(), 
+        password: hashedPassword,
+        role: 'student',
+        created_at: new Date().toISOString()
+      };
     }
 
-    console.log('Inserting new user into database...');
+    console.log('Inserting new', role, 'into', tableName, 'table...');
 
-    // Insert new user
+    // ✅ FIX: Insert into correct table based on role
     const { data, error } = await db
-      .from('users')
+      .from(tableName)
       .insert([userData])
-      .select('id, firstname, lastname, username, email, role, created_at');
+      .select();
 
     if (error) {
       console.error('Supabase insert error:', error);
       
       if (error.code === '23505') {
         return res.status(409).json({ 
-          error: 'User already exists',
+          error: `${role.charAt(0).toUpperCase() + role.slice(1)} already exists`,
           details: error.details
         });
       }
       
       return res.status(500).json({ 
-        error: 'Failed to create user account',
+        error: `Failed to create ${role} account`,
         details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
       });
     }
 
-    console.log('User registered successfully:', { username, email, role });
-    res.status(201).json({ 
+    console.log(`${role} registered successfully:`, { username, email, role });
+    
+    // Return appropriate response based on role
+    const response = { 
       success: true,
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`, 
-      user: data[0] 
-    });
+      [role]: {
+        id: data[0].id,
+        username: data[0].username,
+        email: data[0].email,
+        created_at: data[0].created_at,
+        ...(role === 'student' && {
+          firstname: data[0].firstname,
+          lastname: data[0].lastname,
+          regno: data[0].regno,
+          role: data[0].role
+        })
+      }
+    };
+
+    res.status(201).json(response);
 
   } catch (error) {
     console.error('Registration process error:', error);
@@ -569,6 +599,7 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
     });
   }
 }));
+
 
 // Handle complaint form submission (with database checks)
 app.post('/api/complaintform', asyncHandler(async (req, res) => {

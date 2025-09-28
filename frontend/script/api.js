@@ -35,12 +35,12 @@ class APIService {
   async register(data) {
     const { role, ...userData } = data;
     
-    // Choose endpoint based on role
-    const endpoint = role === 'admin' ? '/adminRegisteration' : '/registeration';
+    //unified endpoint for all role
+    const endpoint =  '/registration';
     
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(userData), // Send data without the role field if backend doesn't expect it
+      body: JSON.stringify(userData),
     });
   }
 
