@@ -60,17 +60,24 @@ async function loginSuccess() {
   });
 
   try {
-    // Prepare login data
+    // ✅ FIXED: Determine if input is email or username
+    const isEmail = usernameOrEmail.includes('@');
+  
     const loginData = {
-      username: usernameOrEmail,
-      email: usernameOrEmail, // Support both username and email login
-      password: password
-    };
+    [isEmail ? 'email' : 'username']: usernameOrEmail, // Send only the relevant field
+    password: password
+  };
+  
+  console.log('Sending login data:', { 
+    ...loginData, 
+    password: '[HIDDEN]',
+    loginType: isEmail ? 'email' : 'username'
+  });
 
-    // Make API call using the new api service
-    const response = await api.loginUser(loginData);
+  // Make API call using the new api service
+  const response = await api.loginUser(loginData);
     
-    console.log('Login response:', response); // Debug log
+  console.log('Login response:', response); // Debug log
 
     // Enhanced response checking
     const isSuccess = response.success || 
