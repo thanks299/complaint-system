@@ -343,31 +343,47 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
   try {
     console.log('Searching for user in database...');
     
-    // Find user by username or email
-    const { data: user, error } = await db
-      .from('users')
-      .select('*')
-      .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
-      .single();
+    let user = null;
+    let userRole = 'student'; // default role
+    
+    // First, try to find user in the 'users' table (students)
+    try {
+      const { data: studentUser, error: studentError } = await db
+        .from('users')
+        .select('*')
+        .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
+        .single();
 
-    console.log('Database query completed:', { 
-      found: !!user, 
-      error: error?.message,
-      errorCode: error?.code
-    });
+      if (!studentError && studentUser) {
+        user = studentUser;
+        userRole = studentUser.role || 'student';
+        console.log('Found student user:', sanitizedLogin);
+      }
+    } catch (err) {
+      console.log('Student user not found, checking admins...');
+    }
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "not found" error, which is expected for invalid users
-      console.error('Database error during login:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Database error during login. Please try again.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+    // If not found in users table, try admins table
+    if (!user) {
+      try {
+        const { data: adminUser, error: adminError } = await db
+          .from('admins')
+          .select('*')
+          .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
+          .single();
+
+        if (!adminError && adminUser) {
+          user = adminUser;
+          userRole = 'admin';
+          console.log('Found admin user:', sanitizedLogin);
+        }
+      } catch (err) {
+        console.log('Admin user not found either');
+      }
     }
 
     if (!user) {
-      console.log('User not found:', sanitizedLogin);
+      console.log('User not found in any table:', sanitizedLogin);
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid username or password' 
@@ -391,8 +407,9 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
     
     // Update last login (don't fail login if this fails)
     try {
+      const tableName = userRole === 'admin' ? 'admins' : 'users';
       await db
-        .from('users')
+        .from(tableName)
         .update({ last_login: new Date().toISOString() })
         .eq('id', user.id);
     } catch (updateError) {
@@ -402,12 +419,12 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
 
     console.log('Login successful for user:', { 
       username: user.username, 
-      role: user.role 
+      role: userRole 
     });
     
     res.status(200).json({
       success: true,
-      role: user.role,
+      role: userRole,
       username: user.username,
       userId: user.id,
       message: 'Login successful',
@@ -415,7 +432,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: userRole
       }
     });
 
