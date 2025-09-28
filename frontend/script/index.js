@@ -1,7 +1,7 @@
 // Error message constants
 const ERROR_MESSAGES = {
   MISSING_FIELDS: "Please enter both username/email and password",
-  INVALID_CREDENTIALS: "Invalid username/email or password.",
+  INVALID_CREDENTIALS: "Invalid username/email or password. Register first",
   TOO_MANY_ATTEMPTS: "Too many login attempts. Please try again later.",
   SERVER_ERROR: "Server error. Please try again later.",
   CONNECTION_ERROR: "Could not connect to server. Please check your internet connection and try again."
@@ -44,6 +44,9 @@ async function loginSuccess() {
       icon: "error",
       title: "Missing Fields",
       text: ERROR_MESSAGES.MISSING_FIELDS
+    }).then(() => {
+      // Redirect to registration page after alert is closed
+      window.location.href = "register.html";
     });
     return;
   }
