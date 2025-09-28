@@ -25,13 +25,13 @@ const ERROR_MESSAGES = {
 // Enhanced toggle functions with accessibility
 function togglePassword() {
   const passwordField = document.getElementById('password');
-  const toggleIcon = document.querySelector('.password-toggle-icon');
+  const toggleIcon = document.querySelector('.eye');
   
-  if (passwordField.type === 'password') {
+  if (passwordField && passwordField.type === 'password') {
     passwordField.type = 'text';
     if (toggleIcon) toggleIcon.textContent = '🙈';
     passwordField.setAttribute('aria-label', 'Password visible');
-  } else {
+  } else if (passwordField) {
     passwordField.type = 'password';
     if (toggleIcon) toggleIcon.textContent = '👁️';
     passwordField.setAttribute('aria-label', 'Password hidden');
@@ -40,22 +40,23 @@ function togglePassword() {
 
 function toggleConfirmPassword() {
   const confirmPasswordField = document.getElementById('confirmPassword');
-  const toggleIcon = document.querySelector('.confirm-password-toggle-icon');
+  const toggleIcons = document.querySelectorAll('.eye');
+  const confirmToggleIcon = toggleIcons[1]; // Second eye icon for confirm password
   
   if (confirmPasswordField) {
     if (confirmPasswordField.type === 'password') {
       confirmPasswordField.type = 'text';
-      if (toggleIcon) toggleIcon.textContent = '🙈';
+      if (confirmToggleIcon) confirmToggleIcon.textContent = '🙈';
       confirmPasswordField.setAttribute('aria-label', 'Confirm password visible');
     } else {
       confirmPasswordField.type = 'password';
-      if (toggleIcon) toggleIcon.textContent = '👁️';
+      if (confirmToggleIcon) confirmToggleIcon.textContent = '👁️';
       confirmPasswordField.setAttribute('aria-label', 'Confirm password hidden');
     }
   }
 }
 
-// Enhanced role change handler with smooth transitions
+// ✅ FIXED: Enhanced role change handler with smooth transitions and auto-clear errors
 function handleRoleChange() {
   const role = document.getElementById('role').value;
   const studentFields = document.getElementById('studentFields');
@@ -63,15 +64,14 @@ function handleRoleChange() {
   const lastnameInput = document.getElementById('lastname');
   const regnoInput = document.getElementById('regno');
   
+  // ✅ CLEAR ALL ERRORS WHEN ROLE CHANGES
+  clearAllFieldErrors();
+  
   if (!studentFields) return;
   
   if (role === 'admin') {
     // Hide student-specific fields for admin with smooth transition
-    studentFields.style.opacity = '0.5';
-    setTimeout(() => {
-      studentFields.style.display = 'none';
-      studentFields.style.opacity = '1';
-    }, 200);
+    studentFields.classList.add('hidden');
     
     // Remove required attributes and clear values
     [firstnameInput, lastnameInput, regnoInput].forEach(input => {
@@ -85,10 +85,7 @@ function handleRoleChange() {
     showRoleInfo('admin');
   } else if (role === 'student') {
     // Show student-specific fields with smooth transition
-    studentFields.style.display = 'block';
-    setTimeout(() => {
-      studentFields.style.opacity = '1';
-    }, 50);
+    studentFields.classList.remove('hidden');
     
     // Add required attributes
     [firstnameInput, lastnameInput, regnoInput].forEach(input => {
@@ -100,22 +97,153 @@ function handleRoleChange() {
     showRoleInfo('student');
   } else {
     // Default: show student fields
-    studentFields.style.display = 'block';
-    studentFields.style.opacity = '1';
+    studentFields.classList.remove('hidden');
   }
 }
 
 // Show role-specific information
 function showRoleInfo(role) {
-  const infoElement = document.getElementById('roleInfo');
-  if (infoElement) {
+  let infoElement = document.getElementById('roleInfo');
+  
+  // Create info element if it doesn't exist
+  if (!infoElement) {
+    infoElement = document.createElement('div');
+    infoElement.id = 'roleInfo';
+    const roleContainer = document.getElementById('role').parentNode;
+    roleContainer.appendChild(infoElement);
+  }
+  
+  if (role && role !== '') {
     const infoText = role === 'admin' 
       ? 'Admin accounts have full access to manage complaints and users.'
       : 'Student accounts can submit and track their own complaints.';
     
     infoElement.innerHTML = `<i class="info-icon">ℹ️</i> ${infoText}`;
     infoElement.style.display = 'block';
+  } else {
+    infoElement.style.display = 'none';
   }
+}
+
+// ✅ ENHANCED: Better error management with auto-clear functionality
+function addFieldError(fieldId, message) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
+
+  field.classList.add('error');
+  
+  let errorElement = document.getElementById(`${fieldId}-error`);
+  if (!errorElement) {
+    errorElement = document.createElement('div');
+    errorElement.id = `${fieldId}-error`;
+    errorElement.className = 'field-error';
+    
+    // Insert error element after the field or its container
+    const container = field.closest('.form-group') || field.parentNode;
+    container.appendChild(errorElement);
+  }
+  
+  errorElement.textContent = message;
+  errorElement.style.display = 'block';
+  errorElement.style.opacity = '1';
+  
+  // ✅ AUTO-CLEAR ERROR AFTER 5 SECONDS
+  setTimeout(() => {
+    if (errorElement && errorElement.style.display === 'block') {
+      errorElement.style.opacity = '0.5';
+    }
+  }, 5000);
+}
+
+// ✅ ENHANCED: Better field error clearing
+function clearFieldError(fieldId) {
+  const field = document.getElementById(fieldId);
+  const errorElement = document.getElementById(`${fieldId}-error`);
+  
+  if (field) {
+    field.classList.remove('error');
+    // ✅ ENSURE FIELD IS ALWAYS INTERACTIVE
+    field.style.pointerEvents = 'auto';
+    field.disabled = false;
+  }
+  
+  if (errorElement) {
+    errorElement.style.display = 'none';
+    errorElement.style.opacity = '0';
+  }
+}
+
+// ✅ ENHANCED: Clear all errors and reset form state
+function clearAllFieldErrors() {
+  // Clear all error elements
+  document.querySelectorAll('.field-error').forEach(error => {
+    error.style.display = 'none';
+    error.style.opacity = '0';
+  });
+  
+  // Remove error classes and ensure fields are interactive
+  document.querySelectorAll('.error').forEach(field => {
+    field.classList.remove('error');
+    field.style.pointerEvents = 'auto';
+    field.disabled = false;
+  });
+  
+  // Clear password strength indicator
+  const strengthElement = document.getElementById('passwordStrength');
+  if (strengthElement) {
+    strengthElement.innerHTML = '';
+  }
+}
+
+// ✅ ENHANCED: Auto-clear errors on field interaction
+function setupFieldInteractionHandlers() {
+  const allFields = [
+    'role', 'firstname', 'lastname', 'regno', 
+    'username', 'email', 'password', 'confirmPassword'
+  ];
+  
+  allFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      // ✅ CLEAR ERROR ON FOCUS (when user clicks on field)
+      field.addEventListener('focus', () => {
+        clearFieldError(fieldId);
+        field.style.pointerEvents = 'auto';
+        field.disabled = false;
+      });
+      
+      // ✅ CLEAR ERROR ON INPUT (when user starts typing)
+      field.addEventListener('input', () => {
+        clearFieldError(fieldId);
+        if (fieldId === 'password') {
+          showPasswordStrength(field.value);
+        }
+        // ✅ CLEAR CONFIRM PASSWORD ERROR WHEN PASSWORD CHANGES
+        if (fieldId === 'password') {
+          clearFieldError('confirmPassword');
+        }
+      });
+      
+      // ✅ CLEAR ERROR ON CHANGE (for select elements)
+      field.addEventListener('change', () => {
+        clearFieldError(fieldId);
+        if (fieldId === 'role') {
+          handleRoleChange();
+        }
+      });
+      
+      // ✅ VALIDATE ON BLUR (when user clicks away)
+      field.addEventListener('blur', () => {
+        // Only validate if field has value or is required
+        const hasValue = field.value.trim() !== '';
+        const isRequired = field.hasAttribute('required');
+        
+        if (hasValue || isRequired) {
+          setTimeout(() => validateSingleField(fieldId), 300);
+        }
+      });
+    }
+  });
 }
 
 // Enhanced validation with real-time feedback
@@ -126,7 +254,7 @@ function validateForm() {
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
 
-  // Clear previous errors
+  // ✅ CLEAR ALL PREVIOUS ERRORS FIRST
   clearAllFieldErrors();
 
   let isValid = true;
@@ -215,8 +343,20 @@ function isValidEmail(email) {
 
 // Password strength indicator
 function showPasswordStrength(password) {
-  const strengthElement = document.getElementById('passwordStrength');
-  if (!strengthElement) return;
+  let strengthElement = document.getElementById('passwordStrength');
+  
+  // Create strength element if it doesn't exist
+  if (!strengthElement) {
+    strengthElement = document.createElement('div');
+    strengthElement.id = 'passwordStrength';
+    const passwordContainer = document.getElementById('password').closest('.form-group');
+    passwordContainer.appendChild(strengthElement);
+  }
+
+  if (!password) {
+    strengthElement.innerHTML = '';
+    return;
+  }
 
   let strength = 0;
   let feedback = [];
@@ -255,45 +395,116 @@ function showPasswordStrength(password) {
   `;
 }
 
-// Field error management
-function addFieldError(fieldId, message) {
+// Single field validation
+function validateSingleField(fieldId) {
   const field = document.getElementById(fieldId);
-  if (!field) return;
+  if (!field) return true;
 
-  field.classList.add('error');
+  const value = field.value.trim();
+  let isValid = true;
+
+  // ✅ ONLY VALIDATE IF FIELD IS VISIBLE AND HAS VALUE OR IS REQUIRED
+  const isVisible = field.offsetParent !== null;
+  const hasValue = value !== '';
+  const isRequired = field.hasAttribute('required');
   
-  let errorElement = document.getElementById(`${fieldId}-error`);
-  if (!errorElement) {
-    errorElement = document.createElement('div');
-    errorElement.id = `${fieldId}-error`;
-    errorElement.className = 'field-error';
-    field.parentNode.appendChild(errorElement);
+  if (!isVisible && !isRequired) return true;
+
+  switch (fieldId) {
+    case 'role':
+      if (!value && isRequired) {
+        addFieldError(fieldId, ERROR_MESSAGES.ROLE_REQUIRED);
+        isValid = false;
+      }
+      break;
+      
+    case 'firstname':
+      if (!value && isRequired) {
+        addFieldError(fieldId, ERROR_MESSAGES.FIRSTNAME_REQUIRED);
+        isValid = false;
+      } else if (value.length > VALIDATION_CONFIG.MAX_NAME_LENGTH) {
+        addFieldError(fieldId, ERROR_MESSAGES.NAME_TOO_LONG);
+        isValid = false;
+      }
+      break;
+      
+    case 'lastname':
+      if (!value && isRequired) {
+        addFieldError(fieldId, ERROR_MESSAGES.LASTNAME_REQUIRED);
+        isValid = false;
+      } else if (value.length > VALIDATION_CONFIG.MAX_NAME_LENGTH) {
+        addFieldError(fieldId, ERROR_MESSAGES.NAME_TOO_LONG);
+        isValid = false;
+      }
+      break;
+      
+    case 'regno':
+      if (!value && isRequired) {
+        addFieldError(fieldId, ERROR_MESSAGES.REGNO_REQUIRED);
+        isValid = false;
+      } else if (hasValue && !VALIDATION_CONFIG.REGNO_PATTERN.test(value)) {
+        addFieldError(fieldId, ERROR_MESSAGES.REGNO_INVALID);
+        isValid = false;
+      }
+      break;
+      
+    case 'username':
+      if (!value) {
+        addFieldError(fieldId, ERROR_MESSAGES.USERNAME_REQUIRED);
+        isValid = false;
+      } else if (value.length > VALIDATION_CONFIG.MAX_USERNAME_LENGTH) {
+        addFieldError(fieldId, ERROR_MESSAGES.USERNAME_TOO_LONG);
+        isValid = false;
+      }
+      break;
+      
+    case 'email':
+      if (!value) {
+        addFieldError(fieldId, ERROR_MESSAGES.EMAIL_REQUIRED);
+        isValid = false;
+      } else if (!isValidEmail(value)) {
+        addFieldError(fieldId, ERROR_MESSAGES.EMAIL_INVALID);
+        isValid = false;
+      }
+      break;
+      
+    case 'password':
+      if (!value) {
+        addFieldError(fieldId, ERROR_MESSAGES.PASSWORD_REQUIRED);
+        isValid = false;
+      } else if (value.length < VALIDATION_CONFIG.MIN_PASSWORD_LENGTH) {
+        addFieldError(fieldId, ERROR_MESSAGES.PASSWORD_TOO_SHORT);
+        isValid = false;
+      }
+      break;
+      
+    case 'confirmPassword':
+      const password = document.getElementById('password').value;
+      if (value !== password && (hasValue || password)) {
+        addFieldError(fieldId, ERROR_MESSAGES.PASSWORDS_MISMATCH);
+        isValid = false;
+      }
+      break;
   }
-  
-  errorElement.textContent = message;
-  errorElement.style.display = 'block';
-}
 
-function clearFieldError(fieldId) {
-  const field = document.getElementById(fieldId);
-  const errorElement = document.getElementById(`${fieldId}-error`);
-  
-  if (field) field.classList.remove('error');
-  if (errorElement) errorElement.style.display = 'none';
-}
-
-function clearAllFieldErrors() {
-  document.querySelectorAll('.field-error').forEach(error => {
-    error.style.display = 'none';
-  });
-  document.querySelectorAll('.error').forEach(field => {
-    field.classList.remove('error');
-  });
+  return isValid;
 }
 
 // Enhanced registration with better error handling and UX
 async function userRegistration() {
+  // ✅ ENSURE ALL FIELDS ARE INTERACTIVE BEFORE VALIDATION
+  const allFields = document.querySelectorAll('input, select');
+  allFields.forEach(field => {
+    field.style.pointerEvents = 'auto';
+    field.disabled = false;
+  });
+
   if (!validateForm()) {
+    // ✅ SCROLL TO FIRST ERROR
+    const firstError = document.querySelector('.field-error[style*="block"]');
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     return;
   }
 
@@ -324,40 +535,17 @@ async function userRegistration() {
   const loadingSwal = Swal.fire({
     title: 'Creating Your Account...',
     html: `
-      <style>
-        .registration-progress {
-          margin-top: 20px;
-        }
-        .progress-step {
-          display: flex;
-          align-items: center;
-          margin-bottom: 10px;
-          opacity: 0.6;
-          transition: opacity 0.3s;
-        }
-        .progress-step.active {
-          opacity: 1;
-          font-weight: bold;
-        }
-        .step-icon {
-          font-size: 1.5em;
-          margin-right: 10px;
-        }
-        .step-text {
-          font-size: 1em;
-        }
-      </style>
-      <div class="registration-progress">
-        <div class="progress-step active">
-          <div class="step-icon">📝</div>
+      <div class="registration-progress" style="margin-top: 20px;">
+        <div class="progress-step active" style="display: flex; align-items: center; margin-bottom: 10px; opacity: 1; font-weight: bold;">
+          <div class="step-icon" style="font-size: 1.5em; margin-right: 10px;">📝</div>
           <div class="step-text">Validating Information</div>
         </div>
-        <div class="progress-step" id="step-creating">
-          <div class="step-icon">⚡</div>
+        <div class="progress-step" id="step-creating" style="display: flex; align-items: center; margin-bottom: 10px; opacity: 0.6;">
+          <div class="step-icon" style="font-size: 1.5em; margin-right: 10px;">⚡</div>
           <div class="step-text">Creating Account</div>
         </div>
-        <div class="progress-step" id="step-finalizing">
-          <div class="step-icon">✨</div>
+        <div class="progress-step" id="step-finalizing" style="display: flex; align-items: center; margin-bottom: 10px; opacity: 0.6;">
+          <div class="step-icon" style="font-size: 1.5em; margin-right: 10px;">✨</div>
           <div class="step-text">Finalizing Setup</div>
         </div>
       </div>
@@ -374,13 +562,21 @@ async function userRegistration() {
     
     // Simulate progress steps
     setTimeout(() => {
-      document.getElementById('step-creating')?.classList.add('active');
+      const step = document.getElementById('step-creating');
+      if (step) {
+        step.style.opacity = '1';
+        step.style.fontWeight = 'bold';
+      }
     }, 1000);
 
     const response = await api.register(formData);
     
     setTimeout(() => {
-      document.getElementById('step-finalizing')?.classList.add('active');
+      const step = document.getElementById('step-finalizing');
+      if (step) {
+        step.style.opacity = '1';
+        step.style.fontWeight = 'bold';
+      }
     }, 500);
     
     console.log('Registration response:', response);
@@ -409,45 +605,18 @@ async function userRegistration() {
         icon: 'success',
         title: '🎉 Account Created Successfully!',
         html: `
-          <style>
-        .success-message {
-          padding: 10px 0 0 0;
-          font-size: 1.1em;
-          color: #222;
-        }
-        .success-message strong {
-          color: #20bf6b;
-        }
-        .next-steps {
-          margin-top: 15px;
-          background: #f4f8f6;
-          border-radius: 8px;
-          padding: 10px 18px;
-          display: inline-block;
-        }
-        .next-steps h4 {
-          margin: 0 0 6px 0;
-          font-size: 1em;
-          color: #2ed573;
-        }
-        .next-steps ul {
-          margin: 0;
-          padding-left: 18px;
-          color: #444;
-        }
-          </style>
-          <div class="success-message">
-        <p>Welcome to NACOS Complaint System, <strong>${username}</strong>!</p>
-        <p>Your ${role} account has been created successfully.</p>
-        <div class="next-steps">
-          <h4>Next Steps:</h4>
-          <ul style="text-align: left; display: inline-block;">
-            ${role === 'student' ? 
-          '<li>Submit your first complaint</li><li>Track complaint status</li>' : 
-          '<li>Access admin dashboard</li><li>Manage user complaints</li>'
-            }
-          </ul>
-        </div>
+          <div class="success-message" style="padding: 10px 0 0 0; font-size: 1.1em; color: #222;">
+            <p>Welcome to NACOS Complaint System, <strong style="color: #20bf6b;">${username}</strong>!</p>
+            <p>Your ${role} account has been created successfully.</p>
+            <div class="next-steps" style="margin-top: 15px; background: #f4f8f6; border-radius: 8px; padding: 10px 18px; display: inline-block;">
+              <h4 style="margin: 0 0 6px 0; font-size: 1em; color: #2ed573;">Next Steps:</h4>
+              <ul style="margin: 0; padding-left: 18px; color: #444; text-align: left; display: inline-block;">
+                ${role === 'student' ? 
+                  '<li>Submit your first complaint</li><li>Track complaint status</li>' : 
+                  '<li>Access admin dashboard</li><li>Manage user complaints</li>'
+                }
+              </ul>
+            </div>
           </div>
         `,
         timer: 4000,
@@ -455,17 +624,8 @@ async function userRegistration() {
         confirmButtonText: role === 'admin' ? 'Go to Dashboard' : 'Start Using System',
         timerProgressBar: true
       }).then((result) => {
-        // Clear form
-        const form = document.getElementById('registerationForm');
-        if (form) {
-          form.reset();
-          clearAllFieldErrors();
-        }
-        
-        // Reset field visibility
-        if (typeof handleRoleChange === 'function') {
-          handleRoleChange();
-        }
+        // ✅ PROPERLY RESET FORM
+        resetForm();
         
         // Redirect based on role
         const redirectPage = role === 'admin' ? 'admindashboard.html' : 'complaintform.html';
@@ -518,9 +678,9 @@ async function userRegistration() {
       title: 'Connection Error',
       html: `
         <p>${errorMessage}</p>
-        <div class="error-actions">
-          <button class="retry-btn" onclick="userRegistration()">Try Again</button>
-          <button class="contact-btn" onclick="window.open('mailto:support@nacos.edu.ng', '_blank')">Contact Support</button>
+        <div class="error-actions" style="margin-top: 15px;">
+          <button class="retry-btn" onclick="userRegistration()" style="margin-right: 10px; padding: 8px 16px; background: #4a7c59; color: white; border: none; border-radius: 5px; cursor: pointer;">Try Again</button>
+          <button class="contact-btn" onclick="window.open('mailto:support@nacos.edu.ng', '_blank')" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Contact Support</button>
         </div>
       `,
       showConfirmButton: false
@@ -528,90 +688,47 @@ async function userRegistration() {
   }
 }
 
-// Real-time validation
-function setupRealTimeValidation() {
-  const fields = ['username', 'email', 'password', 'confirmPassword', 'firstname', 'lastname', 'regno'];
+// ✅ NEW: Properly reset form function
+function resetForm() {
+  const form = document.getElementById('registerationForm');
+  if (form) {
+    form.reset();
+  }
   
-  fields.forEach(fieldId => {
-    const field = document.getElementById(fieldId);
-    if (field) {
-      field.addEventListener('blur', () => {
-        validateSingleField(fieldId);
-      });
-      
-      field.addEventListener('input', () => {
-        clearFieldError(fieldId);
-        if (fieldId === 'password') {
-          showPasswordStrength(field.value);
-        }
-      });
-    }
+  // Clear all errors
+  clearAllFieldErrors();
+  
+  // Reset field visibility
+  handleRoleChange();
+  
+  // Reset password strength
+  const strengthElement = document.getElementById('passwordStrength');
+  if (strengthElement) {
+    strengthElement.innerHTML = '';
+  }
+  
+  // Ensure all fields are interactive
+  const allFields = document.querySelectorAll('input, select');
+  allFields.forEach(field => {
+    field.style.pointerEvents = 'auto';
+    field.disabled = false;
+    field.classList.remove('error');
   });
 }
 
-// Single field validation
-function validateSingleField(fieldId) {
-  const field = document.getElementById(fieldId);
-  if (!field) return;
-
-  const value = field.value.trim();
-  let isValid = true;
-
-  switch (fieldId) {
-    case 'username':
-      if (!value) {
-        addFieldError(fieldId, ERROR_MESSAGES.USERNAME_REQUIRED);
-        isValid = false;
-      } else if (value.length > VALIDATION_CONFIG.MAX_USERNAME_LENGTH) {
-        addFieldError(fieldId, ERROR_MESSAGES.USERNAME_TOO_LONG);
-        isValid = false;
-      }
-      break;
-      
-    case 'email':
-      if (!value) {
-        addFieldError(fieldId, ERROR_MESSAGES.EMAIL_REQUIRED);
-        isValid = false;
-      } else if (!isValidEmail(value)) {
-        addFieldError(fieldId, ERROR_MESSAGES.EMAIL_INVALID);
-        isValid = false;
-      }
-      break;
-      
-    case 'password':
-      if (!value) {
-        addFieldError(fieldId, ERROR_MESSAGES.PASSWORD_REQUIRED);
-        isValid = false;
-      } else if (value.length < VALIDATION_CONFIG.MIN_PASSWORD_LENGTH) {
-        addFieldError(fieldId, ERROR_MESSAGES.PASSWORD_TOO_SHORT);
-        isValid = false;
-      }
-      break;
-      
-    case 'confirmPassword':
-      const password = document.getElementById('password').value;
-      if (value !== password) {
-        addFieldError(fieldId, ERROR_MESSAGES.PASSWORDS_MISMATCH);
-        isValid = false;
-      }
-      break;
-  }
-
-  return isValid;
-}
-
-// Enhanced form submission handler
+// ✅ ENHANCED: Form submission handler with better error prevention
 document.addEventListener('DOMContentLoaded', function() {
   const registrationForm = document.getElementById('registerationForm');
   if (registrationForm) {
     registrationForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      e.stopPropagation();
       userRegistration();
     });
   }
 
-  // Setup real-time validation
-  setupRealTimeValidation();
+  // ✅ SETUP ENHANCED FIELD INTERACTION HANDLERS
+  setupFieldInteractionHandlers();
 
   // Initialize form state
   handleRoleChange();
@@ -622,14 +739,31 @@ document.addEventListener('DOMContentLoaded', function() {
     roleSelect.focus();
   }
 
-  // Add form submission via Enter key
+  // ✅ ENHANCED: Form submission via Enter key with error prevention
   document.addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
       const form = e.target.closest('#registerationForm');
       if (form) {
         e.preventDefault();
+        e.stopPropagation();
         userRegistration();
       }
+    }
+  });
+  
+  // ✅ NEW: Clear errors when clicking anywhere on the form
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.container')) {
+      // Give a small delay to ensure field focus events fire first
+      setTimeout(() => {
+        // Only clear persistent errors, not validation errors
+        document.querySelectorAll('.field-error').forEach(error => {
+          if (error.style.opacity === '0.5') {
+            error.style.display = 'none';
+            error.style.opacity = '0';
+          }
+        });
+      }, 100);
     }
   });
 });
@@ -640,5 +774,6 @@ window.registrationHelpers = {
   handleRoleChange,
   togglePassword,
   toggleConfirmPassword,
-  clearAllFieldErrors
+  clearAllFieldErrors,
+  resetForm
 };
