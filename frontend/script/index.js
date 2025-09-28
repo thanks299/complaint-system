@@ -64,9 +64,15 @@ async function loginSuccess() {
     const isEmail = usernameOrEmail.includes('@');
   
     const loginData = {
-    [isEmail ? 'email' : 'username']: usernameOrEmail, // Send only the relevant field
     password: password
   };
+
+  // Add either username or email field
+  if (isEmail) {
+    loginData.email = usernameOrEmail.toLowerCase();
+  } else {
+    loginData.username = usernameOrEmail.toLowerCase();
+  }
   
   console.log('Sending login data:', { 
     ...loginData, 
