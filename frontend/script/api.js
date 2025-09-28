@@ -15,14 +15,8 @@ class APIService {
     };
 
     try {
-      console.log('Making request to:', url); // Debug log
-      console.log('Request config:', config); // Debug log
-      
       const response = await fetch(url, config);
       const data = await response.json();
-
-      console.log('Response status:', response.status); // Debug log
-      console.log('Response data:', data); // Debug log
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -37,18 +31,9 @@ class APIService {
 
   // User Authentication
   async loginUser(data) {
-    // Ensure the data format matches what the backend expects
-    const loginPayload = {
-      username: data.username || undefined,
-      email: data.email || undefined,
-      password: data.password
-    };
-
-    // Remove undefined fields
-    Object.keys(loginPayload).forEach(key => {
-      if (loginPayload[key] === undefined) {
-        delete loginPayload[key];
-      }
+    return this.request('/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 
