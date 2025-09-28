@@ -324,6 +324,29 @@ async function userRegistration() {
   const loadingSwal = Swal.fire({
     title: 'Creating Your Account...',
     html: `
+      <style>
+        .registration-progress {
+          margin-top: 20px;
+        }
+        .progress-step {
+          display: flex;
+          align-items: center;
+          margin-bottom: 10px;
+          opacity: 0.6;
+          transition: opacity 0.3s;
+        }
+        .progress-step.active {
+          opacity: 1;
+          font-weight: bold;
+        }
+        .step-icon {
+          font-size: 1.5em;
+          margin-right: 10px;
+        }
+        .step-text {
+          font-size: 1em;
+        }
+      </style>
       <div class="registration-progress">
         <div class="progress-step active">
           <div class="step-icon">📝</div>
@@ -386,18 +409,45 @@ async function userRegistration() {
         icon: 'success',
         title: '🎉 Account Created Successfully!',
         html: `
+          <style>
+        .success-message {
+          padding: 10px 0 0 0;
+          font-size: 1.1em;
+          color: #222;
+        }
+        .success-message strong {
+          color: #20bf6b;
+        }
+        .next-steps {
+          margin-top: 15px;
+          background: #f4f8f6;
+          border-radius: 8px;
+          padding: 10px 18px;
+          display: inline-block;
+        }
+        .next-steps h4 {
+          margin: 0 0 6px 0;
+          font-size: 1em;
+          color: #2ed573;
+        }
+        .next-steps ul {
+          margin: 0;
+          padding-left: 18px;
+          color: #444;
+        }
+          </style>
           <div class="success-message">
-            <p>Welcome to NACOS Complaint System, <strong>${username}</strong>!</p>
-            <p>Your ${role} account has been created successfully.</p>
-            <div class="next-steps">
-              <h4>Next Steps:</h4>
-              <ul style="text-align: left; display: inline-block;">
-                ${role === 'student' ? 
-                  '<li>Submit your first complaint</li><li>Track complaint status</li>' : 
-                  '<li>Access admin dashboard</li><li>Manage user complaints</li>'
-                }
-              </ul>
-            </div>
+        <p>Welcome to NACOS Complaint System, <strong>${username}</strong>!</p>
+        <p>Your ${role} account has been created successfully.</p>
+        <div class="next-steps">
+          <h4>Next Steps:</h4>
+          <ul style="text-align: left; display: inline-block;">
+            ${role === 'student' ? 
+          '<li>Submit your first complaint</li><li>Track complaint status</li>' : 
+          '<li>Access admin dashboard</li><li>Manage user complaints</li>'
+            }
+          </ul>
+        </div>
           </div>
         `,
         timer: 4000,

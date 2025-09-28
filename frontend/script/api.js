@@ -1,22 +1,28 @@
 class APIService {
   constructor() {
     this.baseURL = 'https://complaint-system-1os4.onrender.com/api';
+
+    this.headers = {
+      'Content-Type': 'application/json',
+    };
   }
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers: this.headers,
       ...options,
     };
 
     try {
       const response = await fetch(url, config);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.json();
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -36,11 +42,11 @@ class APIService {
     const { role, ...userData } = data;
     
     //unified endpoint for all role
-    const endpoint =  '/registration';
+    const endpoint =  '/registeration';
     
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(userData),
+      body: JSON.stringify(data),
     });
   }
 

@@ -1,0 +1,11 @@
+{
+  "name": "complaint-system-api",
+  "version": "1.0.0",
+  "description": "NACOS Complaint System API",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5"
+  }
+}

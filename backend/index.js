@@ -431,7 +431,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
 }));
 
 // Handle user registration (same database checks)
-app.post('/api/registration', asyncHandler(async (req, res) => {
+app.post('/api/registeration', asyncHandler(async (req, res) => {
   // Check database connection first
   if (!db || typeof db.from !== 'function') {
     return res.status(500).json({ 
