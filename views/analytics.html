@@ -3,110 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics & Reports - NACOS Complaint System</title>
+    <title>Analytics Dashboard - NACOS Complaint System</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="./assets/National-Open_University-Nigeria.png" type="image/x-icon">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./styles/admin.css">
+    <link rel="stylesheet" href="./styles/navigation.css">
+    <link rel="stylesheet" href="./styles/responsive.css">
 </head>
 <body>
-    <div class="section-header">
-        <h1 class="section-title">
-            <i class="fas fa-chart-bar"></i>
-            Analytics & Reports
-        </h1>
-        <p class="section-subtitle">Detailed insights and analytics for your complaint management system.</p>
+    <div class="dashboard-container">
+        <!-- Sidebar will be loaded dynamically from sidebar.html -->
+        <div id="sidebar-container"></div>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header will be loaded dynamically from header.html -->
+            <div id="header-container"></div>
+            
+            <!-- Breadcrumb will be loaded dynamically -->
+            <div id="breadcrumb-container"></div>
+            
+            <!-- Content Wrapper -->
+            <div class="content-wrapper" id="analytics-container">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics Dashboard
+                    </h2>
+                    <p class="section-subtitle">Insights and data visualization for the complaint system</p>
+                </div>
+                
+                <!-- Analytics Filters -->
+                <div class="analytics-filters">
+                    <div class="filter-item">
+                        <label for="time-range">Time Range:</label>
+                        <select id="time-range" class="filter-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="365">Last 12 Months</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Custom Date Range -->
+                    <div class="filter-item">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="custom-range-toggle">
+                            <span class="checkmark"></span>
+                            Custom Range
+                        </label>
+                    </div>
+                    
+                    <div id="custom-date-container" class="custom-date-range">
+                        <div class="date-input">
+                            <label for="start-date">From:</label>
+                            <input type="date" id="start-date" class="date-picker">
+                        </div>
+                        <div class="date-input">
+                            <label for="end-date">To:</label>
+                            <input type="date" id="end-date" class="date-picker">
+                        </div>
+                        <button id="apply-date-range" class="action-btn">
+                            Apply
+                        </button>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="filter-btn" data-action="generate-report">
+                            <i class="fas fa-file-pdf"></i>
+                            Generate Report
+                        </button>
+                        <button class="filter-btn" data-action="export-all-data">
+                            <i class="fas fa-download"></i>
+                            Export All Data
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Key Metrics Cards -->
+                <div class="analytics-summary">
+                    <h3 class="subsection-title">Key Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="avg-resolution-time">-</div>
+                                <div class="metric-label">Avg. Resolution Time</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="resolution-rate">-</div>
+                                <div class="metric-label">Resolution Rate</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="satisfaction-score">-</div>
+                                <div class="metric-label">Satisfaction Score</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Complaints Trend</h3>
+                            <div class="chart-actions">
+                                <button class="table-btn" data-action="export-chart">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="complaints-trend-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Status Distribution</h3>
+                            <div class="chart-actions">
+                                <button class="table-btn" data-action="export-chart">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="status-distribution-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Complaint Types</h3>
+                            <div class="chart-actions">
+                                <button class="table-btn" data-action="export-chart">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="types-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Resolution Time</h3>
+                            <div class="chart-actions">
+                                <button class="table-btn" data-action="export-chart">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="resolution-time-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Issues Analysis -->
+                <div class="analytics-section">
+                    <h3 class="subsection-title">Top Issues Analysis</h3>
+                    <div class="issues-container">
+                        <div id="top-issues-table"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Time Range Selector -->
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label class="filter-label">Time Range:</label>
-            <select class="filter-select" id="time-range">
-                <option value="7">Last 7 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 3 months</option>
-                <option value="365">Last year</option>
-            </select>
-        </div>
-        <button class="filter-btn" data-action="generate-report">
-            <i class="fas fa-file-pdf"></i>
-            Generate Report
-        </button>
-    </div>
-
-    <!-- Charts Grid -->
-    <div class="charts-grid">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Complaints Trend</h3>
-                <div class="chart-actions">
-                    <button class="table-btn" data-action="export-chart">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="complaints-trend-chart"></canvas>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Status Distribution</h3>
-            </div>
-            <div class="chart-container">
-                <canvas id="status-distribution-chart"></canvas>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Complaint Types</h3>
-            </div>
-            <div class="chart-container">
-                <canvas id="types-chart"></canvas>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Resolution Time</h3>
-            </div>
-            <div class="chart-container">
-                <canvas id="resolution-time-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analytics Summary -->
-    <div class="analytics-summary">
-        <h3 class="subsection-title">Key Metrics</h3>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value" id="avg-resolution-time">2.5 days</div>
-                    <div class="metric-label">Avg. Resolution Time</div>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="fas fa-percentage"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value" id="resolution-rate">78%</div>
-                    <div class="metric-label">Resolution Rate</div>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="fas fa-star"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value" id="satisfaction-score">4.2/5</div>
-                    <div class="metric-label">Satisfaction Score</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Core JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="./script/api.js"></script>
+    <script src="./script/navigation.js"></script>
+    <script src="./script/analytics.js"></script>
 </body>
 </html>
