@@ -8,13 +8,13 @@ const CONFIG = {
   REFRESH_INTERVAL: 30000, // 30 seconds
   SEARCH_DEBOUNCE: 300,    // 300ms
   STATUS_FLOW: {
-    'pending': 'in-progress',
-    'in-progress': 'resolved', 
+    'pending': 'in_progress',
+    'in_progress': 'resolved', 
     'resolved': 'pending'
   },
   ACTION_TEXTS: {
     'pending': 'Start',
-    'in-progress': 'Resolve',
+    'in_progress': 'Resolve',
     'resolved': 'Reopen'
   }
 };
@@ -55,8 +55,9 @@ function withLoading(asyncFunction, loadingMessage = 'Loading...') {
 function checkAdminAuth() {
     const role = localStorage.getItem('role');
     const username = localStorage.getItem('username');
+    const token = localStorage.getItem('authToken');
     
-    if (!role || !username) {
+    if (!token || !role || !username) {
         Swal.fire({
             icon: 'warning',
             title: 'Access Denied',
@@ -78,25 +79,44 @@ function checkAdminAuth() {
         return;
     }
 
-    // Display welcome message
-    updateWelcomeMessage(username);
+    // Update profile information
+    updateProfileInfo(username);
 }
 
-// Update welcome message
-function updateWelcomeMessage(username) {
-    const welcomeElement = document.querySelector('.dashboard-header h1');
-    if (welcomeElement) {
-        welcomeElement.textContent = `Welcome, ${username}`;
+// Update profile information in sidebar and header
+function updateProfileInfo(username) {
+    // Update admin name in sidebar
+    const adminNameElem = document.querySelector('.admin-name');
+    if (adminNameElem) {
+        adminNameElem.textContent = username;
+    }
+    
+    // Update profile name in header
+    const profileNameElem = document.querySelector('.profile-name');
+    if (profileNameElem) {
+        profileNameElem.textContent = username;
     }
 }
 
 // Enhanced dashboard initialization
 const initializeDashboard = withLoading(async function() {
     try {
-        await Promise.all([
-            loadDashboardStats(),
-            loadAllComplaints()
-        ]);
+        // Try to get data from API first
+        let dashboardData;
+        /*
+        try {
+            dashboardData = await api.getDashboardStats();
+        } catch (error) {
+            console.warn('Could not fetch dashboard data from API, using mock data instead');
+            dashboardData = api.getMockDashboardData();
+        }*/
+        
+        // Update dashboard statistics
+        updateDashboardStats(dashboardData);
+        
+        // Load complaints
+        await loadAllComplaints();
+        
         showSuccess('Dashboard loaded successfully');
     } catch (error) {
         showError('Failed to load dashboard data. Please refresh the page.');
@@ -104,16 +124,104 @@ const initializeDashboard = withLoading(async function() {
     }
 }, 'Loading dashboard...');
 
-// Setup event listeners with enhanced functionality
+// Update dashboard statistics
+function updateDashboardStats(stats) {
+    // Update counter values with animation
+    updateStatCard('pending-count', stats.pendingCount);
+    updateStatCard('inprogress-count', stats.inProgressCount);
+    updateStatCard('resolved-count', stats.resolvedCount);
+    updateStatCard('total-users', stats.totalUsers);
+}
+
+// Setup event listeners
 function setupEventListeners() {
-    // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
+    // Navigation links
+    setupNavigationEvents();
+    
+    // Search functionality
+    setupSearchFunctionality();
+    
+    // Profile dropdown toggle
+    setupProfileDropdown();
+    
+    // Quick action buttons
+    setupQuickActionButtons();
+    
+    // Table action buttons (will be set up when table is populated)
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+}
+
+// Set up navigation events
+function setupNavigationEvents() {
+    // Sidebar nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            const section = link.getAttribute('data-section');
+            if (section) {
+                e.preventDefault();
+                activateNavItem(section);
+            }
+        });
+    });
+    
+    // Sidebar toggle
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        });
     }
     
-    // Enhanced search with debouncing
-    const searchInput = document.getElementById('searchInput');
+    // Mobile menu button
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+    }
+    
+    // Logout functionality
+    document.querySelectorAll('[data-action="logout"]').forEach(btn => {
+        btn.addEventListener('click', handleLogout);
+    });
+}
+
+// Set active navigation item
+function activateNavItem(section) {
+    // Remove active class from all nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to selected nav item
+    const navItem = document.querySelector(`.nav-link[data-section="${section}"]`).parentNode;
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    // Update breadcrumb
+    const breadcrumb = document.querySelector('.breadcrumb');
+    if (breadcrumb) {
+        breadcrumb.innerHTML = `
+            <span class="breadcrumb-item">
+                <i class="fas fa-home"></i>
+                <a href="#dashboard">Dashboard</a>
+            </span>
+            ${section !== 'dashboard' ? `
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">
+                ${section.charAt(0).toUpperCase() + section.slice(1)}
+            </span>` : ''}
+        `;
+    }
+}
+
+// Set up search functionality
+function setupSearchFunctionality() {
+    const searchInput = document.querySelector('.search-input');
     if (searchInput) {
         searchInput.addEventListener('input', handleSearchDebounced);
         searchInput.addEventListener('keypress', (e) => {
@@ -122,18 +230,205 @@ function setupEventListeners() {
             }
         });
     }
+}
 
-    // Refresh button
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            initializeDashboard();
+// Set up profile dropdown
+function setupProfileDropdown() {
+    const profileBtn = document.querySelector('.profile-btn');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    
+    if (profileBtn && dropdownMenu) {
+        profileBtn.addEventListener('click', () => {
+            dropdownMenu.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
         });
     }
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', handleKeyboardShortcuts);
 }
+
+// Set up quick action buttons
+function setupQuickActionButtons() {
+    document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.getAttribute('data-action');
+            handleQuickAction(action);
+        });
+    });
+}
+
+// Handle quick action clicks
+function handleQuickAction(action) {
+    console.log(`Quick action: ${action}`);
+    
+    switch(action) {
+        case 'view-complaints':
+            activateNavItem('complaints');
+            break;
+        case 'add-user':
+            activateNavItem('users');
+            showAddUserModal();
+            break;
+        case 'generate-report':
+            activateNavItem('analytics');
+            showGenerateReportModal();
+            break;
+        case 'system-settings':
+            activateNavItem('settings');
+            break;
+        default:
+            console.warn(`Unknown action: ${action}`);
+    }
+}
+
+// Show add user modal
+function showAddUserModal() {
+    Swal.fire({
+        title: 'Add New User',
+        html: `
+            <form id="add-user-form">
+                <div class="swal2-input-container">
+                    <input id="name" class="swal2-input" placeholder="Full Name">
+                    <input id="email" class="swal2-input" placeholder="Email Address">
+                    <select id="role" class="swal2-select">
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <input id="password" type="password" class="swal2-input" placeholder="Password">
+                </div>
+            </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Add User',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const role = document.getElementById('role').value;
+            const password = document.getElementById('password').value;
+            
+            if (!name || !email || !role || !password) {
+                Swal.showValidationMessage('Please fill all fields');
+                return false;
+            }
+            
+            return { name, email, role, password };
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Call API to create user
+            createUser(result.value);
+        }
+    });
+}
+
+// Create new user
+const createUser = withErrorHandling(async function(userData) {
+    await api.createUser(userData);
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'User Created',
+        text: `User ${userData.name} has been created successfully`,
+        timer: 2000,
+        showConfirmButton: false
+    });
+}, 'create user');
+
+// Show generate report modal
+function showGenerateReportModal() {
+    Swal.fire({
+        title: 'Generate Report',
+        html: `
+            <form id="report-form">
+                <div class="swal2-input-container">
+                    <select id="report-type" class="swal2-select">
+                        <option value="">Select Report Type</option>
+                        <option value="complaints">Complaints Report</option>
+                        <option value="users">Users Report</option>
+                        <option value="analytics">Analytics Report</option>
+                    </select>
+                    <select id="report-format" class="swal2-select">
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                        <option value="excel">Excel</option>
+                    </select>
+                    <div class="date-range-container">
+                        <label for="start-date">Start Date</label>
+                        <input id="start-date" type="date" class="swal2-input">
+                        <label for="end-date">End Date</label>
+                        <input id="end-date" type="date" class="swal2-input">
+                    </div>
+                </div>
+            </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Generate',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const reportType = document.getElementById('report-type').value;
+            const reportFormat = document.getElementById('report-format').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!reportType || !reportFormat) {
+                Swal.showValidationMessage('Please select report type and format');
+                return false;
+            }
+            
+            return { reportType, reportFormat, startDate, endDate };
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Call API to generate report
+            generateReport(result.value);
+        }
+    });
+}
+
+// Generate report
+const generateReport = withErrorHandling(async function(reportData) {
+    // Show generating message
+    Swal.fire({
+        title: 'Generating Report',
+        text: 'Please wait while we generate your report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        // Call API to generate report
+        const result = await api.generateReport(reportData.reportFormat, {
+            type: reportData.reportType,
+            startDate: reportData.startDate,
+            endDate: reportData.endDate
+        });
+        
+        // Show success and provide download link
+        Swal.fire({
+            icon: 'success',
+            title: 'Report Generated',
+            html: `
+                <p>Your report has been generated successfully.</p>
+                <a href="${result.downloadUrl}" class="download-link" target="_blank">
+                    <i class="fas fa-download"></i> Download Report
+                </a>
+            `,
+            confirmButtonText: 'Close'
+        });
+    } catch (error) {
+        throw error;
+    }
+}, 'generate report');
 
 // Debounced search handler
 function handleSearchDebounced(event) {
@@ -152,11 +447,11 @@ function handleSearch(event) {
     } else {
         filteredComplaints = allComplaints.filter(complaint => {
             const searchableFields = [
-                complaint.title || '',
+                complaint.title || complaint.subject || '',
                 complaint.description || complaint.message || '',
-                complaint.username || complaint.user_name || '',
+                complaint.username || complaint.studentName || '',
                 complaint.status || '',
-                complaint.id?.toString() || ''
+                complaint.id?.toString() || complaint.ticketId || ''
             ];
             
             return searchableFields.some(field => 
@@ -166,45 +461,7 @@ function handleSearch(event) {
     }
     
     displayComplaints(filteredComplaints);
-    updateSearchStats(searchTerm, filteredComplaints.length);
 }
-
-// Update search statistics
-function updateSearchStats(searchTerm, resultCount) {
-    let statusText = '';
-    if (searchTerm) {
-        statusText = `Found ${resultCount} complaint${resultCount !== 1 ? 's' : ''} for "${searchTerm}"`;
-    } else {
-        statusText = `Showing all ${allComplaints.length} complaints`;
-    }
-    
-    const statusElement = document.getElementById('searchStatus');
-    if (statusElement) {
-        statusElement.textContent = statusText;
-    }
-}
-
-// Enhanced stats loading
-const loadDashboardStats = withErrorHandling(async function() {
-    const complaints = await api.getComplaints();
-    
-    const stats = {
-        total: complaints.length,
-        pending: complaints.filter(c => c.status === 'pending').length,
-        inProgress: complaints.filter(c => c.status === 'in-progress').length,
-        resolved: complaints.filter(c => c.status === 'resolved').length
-    };
-    
-    // Update stat cards with animation
-    updateStatCard('totalComplaints', stats.total);
-    updateStatCard('pendingComplaints', stats.pending);
-    updateStatCard('resolvedComplaints', stats.resolved);
-    
-    // Additional stats
-    updateStatCard('inProgressComplaints', stats.inProgress);
-    
-    return stats;
-}, 'load dashboard statistics');
 
 // Animated stat card update
 function updateStatCard(elementId, value) {
@@ -233,216 +490,360 @@ function animateCounter(element, start, end, duration) {
 
 // Enhanced complaint loading
 const loadAllComplaints = withErrorHandling(async function() {
-    allComplaints = await api.getComplaints();
+    /* COMMENT OUT MOCK DATA FALLBACK
+    try {
+        // Try to get complaints from API first
+        allComplaints = await api.getComplaints();
+    } catch (error) {
+        console.warn('Could not fetch complaints from API, using mock data instead');
+        const mockData = api.getMockDashboardData();
+        allComplaints = mockData.recentComplaints || [];
+    }*/
+    
     filteredComplaints = [...allComplaints];
-    displayComplaints(filteredComplaints);
+    
+    // Update the dashboard complaints table
+    updateDashboardComplaintsTable(allComplaints);
+    
     return allComplaints;
 }, 'load complaints');
 
-// Enhanced complaint display with better error handling
-function displayComplaints(complaints) {
-    const tbody = document.querySelector('#complaintsTable tbody');
-    const emptyState = document.getElementById('emptyState');
+// Update the dashboard complaints table
+function updateDashboardComplaintsTable(complaints) {
+    const tbody = document.getElementById('dashboard-complaints-tbody');
+    if (!tbody) return;
     
-    if (!tbody) {
-        console.error('Complaints table body not found');
-        return;
-    }
+    // Clear current content
+    tbody.innerHTML = '';
     
+    // If no complaints, show empty state
     if (!complaints || complaints.length === 0) {
-        tbody.innerHTML = '';
-        if (emptyState) emptyState.style.display = 'block';
-        return;
-    }
-    
-    if (emptyState) emptyState.style.display = 'none';
-    
-    tbody.innerHTML = complaints.map((complaint, index) => {
-        const safeComplaint = {
-            id: complaint.id || index,
-            username: complaint.username || complaint.user_name || 'Unknown User',
-            title: complaint.title || complaint.subject || 'No Title',
-            description: complaint.description || complaint.message || 'No Description',
-            created_at: complaint.created_at || complaint.date_created || new Date().toISOString(),
-            status: complaint.status || 'pending'
-        };
-        
-        return `
-            <tr data-complaint-id="${safeComplaint.id}">
-                <td>#${safeComplaint.id}</td>
-                <td>${escapeHtml(safeComplaint.username)}</td>
-                <td>${escapeHtml(safeComplaint.title)}</td>
-                <td>${escapeHtml(truncateText(safeComplaint.description, 100))}</td>
-                <td>${formatDate(safeComplaint.created_at)}</td>
-                <td>
-                    <span class="status-badge status-${safeComplaint.status}">
-                        ${safeComplaint.status}
-                    </span>
-                </td>
-                <td class="action-buttons">
-                    <button class="action-btn" onclick="updateComplaintStatus(${safeComplaint.id}, '${getNextStatus(safeComplaint.status)}')">
-                        ${getActionText(safeComplaint.status)}
-                    </button>
-                    <button class="action-btn view-btn" onclick="viewComplaint(${safeComplaint.id})">View</button>
-                    <button class="action-btn delete" onclick="deleteComplaint(${safeComplaint.id})">Delete</button>
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-table-message">
+                    <div class="table-empty">
+                        <div class="empty-illustration">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h4>No complaints found</h4>
+                        <p>There are no complaints to display at this time.</p>
+                    </div>
                 </td>
             </tr>
         `;
-    }).join('');
-    
-    // Add hover effects
-    addTableInteractions();
-}
-
-// Add table interactions
-function addTableInteractions() {
-    const rows = document.querySelectorAll('#complaintsTable tbody tr');
-    rows.forEach(row => {
-        row.addEventListener('mouseenter', () => {
-            row.style.backgroundColor = '#f8f9fa';
-        });
-        row.addEventListener('mouseleave', () => {
-            row.style.backgroundColor = '';
-        });
-    });
-}
-
-// Enhanced status update with optimistic updates
-const updateComplaintStatus = withErrorHandling(async function(complaintId, newStatus) {
-    const result = await Swal.fire({
-        title: 'Update Status',
-        text: `Change complaint #${complaintId} status to "${newStatus}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, update it!',
-        cancelButtonText: 'Cancel'
-    });
-    
-    if (result.isConfirmed) {
-        // Optimistic update
-        updateComplaintInList(complaintId, { status: newStatus });
-        displayComplaints(filteredComplaints);
-        
-        try {
-            await api.updateComplaintStatus(complaintId, newStatus);
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Status Updated',
-                text: `Complaint #${complaintId} status changed to "${newStatus}"`,
-                timer: 2000,
-                showConfirmButton: false
-            });
-            
-            // Refresh stats
-            await loadDashboardStats();
-        } catch (error) {
-            // Revert optimistic update on failure
-            await loadAllComplaints();
-            throw error;
-        }
-    }
-}, 'update complaint status');
-
-// Update complaint in local list
-function updateComplaintInList(complaintId, updates) {
-    const index = allComplaints.findIndex(c => c.id == complaintId);
-    if (index !== -1) {
-        allComplaints[index] = { ...allComplaints[index], ...updates };
-        filteredComplaints = [...allComplaints];
-    }
-}
-
-// Enhanced complaint viewer
-const viewComplaint = withErrorHandling(async function(complaintId) {
-    const complaint = allComplaints.find(c => c.id == complaintId);
-    if (!complaint) {
-        showError('Complaint not found');
         return;
     }
     
-    const modalHtml = `
-        <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-            <div class="complaint-detail">
-                <p><strong>ID:</strong> #${complaint.id}</p>
-                <p><strong>User:</strong> ${escapeHtml(complaint.username || complaint.user_name || 'N/A')}</p>
-                <p><strong>Email:</strong> ${escapeHtml(complaint.email || 'N/A')}</p>
-                <p><strong>Date:</strong> ${formatDate(complaint.created_at || complaint.date_created)}</p>
-                <p><strong>Status:</strong> 
-                    <span class="status-badge status-${complaint.status || 'pending'}">
-                        ${complaint.status || 'pending'}
-                    </span>
-                </p>
-                <p><strong>Priority:</strong> ${complaint.priority || 'Medium'}</p>
-                <hr>
-                <p><strong>Title:</strong></p>
-                <div class="complaint-title">${escapeHtml(complaint.title || complaint.subject || 'No title')}</div>
-                <br>
-                <p><strong>Description:</strong></p>
-                <div class="complaint-description">
-                    ${escapeHtml(complaint.description || complaint.message || 'No description provided').replace(/\n/g, '<br>')}
+    // Add complaints to table
+    complaints.slice(0, 5).forEach(complaint => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td><strong>${complaint.ticketId || `NACOS-${String(complaint.id).padStart(6, '0')}`}</strong></td>
+            <td>
+                <div class="user-info">
+                    <div class="user-name">${escapeHtml(complaint.studentName || complaint.username || 'Unknown')}</div>
+                    <div class="user-email">${escapeHtml(complaint.studentId || complaint.email || 'N/A')}</div>
+                </div>
+            </td>
+            <td><span class="type-badge">${complaint.type || 'General'}</span></td>
+            <td><span class="status-badge ${complaint.status || 'pending'}">${complaint.status || 'pending'}</span></td>
+            <td><span class="priority-badge ${complaint.priority || 'medium'}">${complaint.priority || 'medium'}</span></td>
+            <td>${formatDate(complaint.dateCreated || complaint.created_at)}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="${complaint.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="${complaint.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="${complaint.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    // Add event listeners to the newly created buttons
+    setupTableActionButtons();
+}
+
+// Set up table action buttons
+function setupTableActionButtons() {
+    // View buttons
+    document.querySelectorAll('[data-action="view-complaint"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            viewComplaint(id);
+        });
+    });
+    
+    // Edit buttons
+    document.querySelectorAll('[data-action="edit-complaint"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            editComplaintStatus(id);
+        });
+    });
+    
+    // Delete buttons
+    document.querySelectorAll('[data-action="delete-complaint"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            deleteComplaint(id);
+        });
+    });
+}
+
+// View complaint details
+const viewComplaint = withErrorHandling(async function(complaintId) {
+    // Show loading
+    showLoading(true, 'Loading complaint details...');
+    
+    try {
+        // Get complaint from API - no mock data fallback
+        const complaint = await api.getComplaintById(complaintId);
+        /*
+        let complaint;
+        try {
+            complaint = await api.getComplaintById(complaintId);
+        } catch (error) {
+            console.warn('Could not fetch complaint details from API, using local data instead');
+            complaint = allComplaints.find(c => c.id == complaintId);
+            
+            if (!complaint) {
+                throw new Error('Complaint not found');
+            }
+        }*/
+        
+        showComplaintModal(complaint);
+    } finally {
+        showLoading(false);
+    }
+}, 'view complaint details');
+
+// Show complaint details in a modal
+function showComplaintModal(complaint) {
+    Swal.fire({
+        title: `Complaint Details`,
+        html: `
+            <div class="complaint-detail-grid">
+                <div class="detail-group">
+                    <label>ID:</label>
+                    <div>${complaint.ticketId || `NACOS-${String(complaint.id).padStart(6, '0')}`}</div>
+                </div>
+                <div class="detail-group">
+                    <label>Student:</label>
+                    <div>${escapeHtml(complaint.studentName || complaint.username || 'N/A')}</div>
+                </div>
+                <div class="detail-group">
+                    <label>Student ID:</label>
+                    <div>${escapeHtml(complaint.studentId || 'N/A')}</div>
+                </div>
+                <div class="detail-group">
+                    <label>Date:</label>
+                    <div>${formatDate(complaint.dateCreated || complaint.created_at)}</div>
+                </div>
+                <div class="detail-group">
+                    <label>Type:</label>
+                    <div><span class="type-badge">${complaint.type || 'General'}</span></div>
+                </div>
+                <div class="detail-group">
+                    <label>Status:</label>
+                    <div><span class="status-badge ${complaint.status || 'pending'}">${complaint.status || 'pending'}</span></div>
+                </div>
+                <div class="detail-group">
+                    <label>Priority:</label>
+                    <div><span class="priority-badge ${complaint.priority || 'medium'}">${complaint.priority || 'medium'}</span></div>
+                </div>
+                <div class="detail-group full-width">
+                    <label>Subject:</label>
+                    <div>${escapeHtml(complaint.subject || complaint.title || 'N/A')}</div>
+                </div>
+                <div class="detail-group full-width">
+                    <label>Description:</label>
+                    <div class="complaint-description">${escapeHtml(complaint.description || complaint.message || 'No description provided').replace(/\n/g, '<br>')}</div>
                 </div>
             </div>
-        </div>
-    `;
-    
-    Swal.fire({
-        title: `Complaint #${complaint.id}`,
-        html: modalHtml,
-        width: '700px',
+        `,
+        width: 700,
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Update Status',
-        cancelButtonText: 'Close',
-        customClass: {
-            popup: 'complaint-modal'
-        }
+        cancelButtonText: 'Close'
     }).then((result) => {
         if (result.isConfirmed) {
-            const nextStatus = getNextStatus(complaint.status);
-            updateComplaintStatus(complaint.id, nextStatus);
+            editComplaintStatus(complaint.id);
         }
     });
-}, 'view complaint details');
+}
 
-// Enhanced delete functionality
+// Edit complaint status
+const editComplaintStatus = withErrorHandling(async function(complaintId) {
+    // Get complaint from API
+    const complaint = await api.getComplaintById(complaintId);
+    /* commenting out mock data fallback
+    let complaint;
+    try {
+        complaint = await api.getComplaintById(complaintId);
+    } catch (error) {
+        console.warn('Could not fetch complaint details from API, using local data instead');
+        complaint = allComplaints.find(c => c.id == complaintId);
+        
+        if (!complaint) {
+            throw new Error('Complaint not found');
+        }
+    }*/
+    
+    // Show edit status modal
+    Swal.fire({
+        title: 'Update Complaint Status',
+        html: `
+            <form id="edit-status-form">
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select class="swal2-select" id="status-select">
+                        <option value="pending" ${(complaint.status === 'pending') ? 'selected' : ''}>Pending</option>
+                        <option value="in_progress" ${(complaint.status === 'in_progress') ? 'selected' : ''}>In Progress</option>
+                        <option value="resolved" ${(complaint.status === 'resolved') ? 'selected' : ''}>Resolved</option>
+                        <option value="closed" ${(complaint.status === 'closed') ? 'selected' : ''}>Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority:</label>
+                    <select class="swal2-select" id="priority-select">
+                        <option value="low" ${(complaint.priority === 'low') ? 'selected' : ''}>Low</option>
+                        <option value="medium" ${(complaint.priority === 'medium') ? 'selected' : ''}>Medium</option>
+                        <option value="high" ${(complaint.priority === 'high') ? 'selected' : ''}>High</option>
+                        <option value="urgent" ${(complaint.priority === 'urgent') ? 'selected' : ''}>Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resolution Note:</label>
+                    <textarea class="swal2-textarea" id="resolution-note" rows="4" 
+                        placeholder="Add notes about the resolution or status change">${complaint.resolutionNote || ''}</textarea>
+                </div>
+            </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Update',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const status = document.getElementById('status-select').value;
+            const priority = document.getElementById('priority-select').value;
+            const resolutionNote = document.getElementById('resolution-note').value;
+            
+            return { status, priority, resolutionNote };
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            updateComplaint(complaintId, result.value);
+        }
+    });
+}, 'edit complaint status');
+
+// Update complaint
+const updateComplaint = withErrorHandling(async function(complaintId, updates) {
+    try {
+        // Update complaint via API
+        await api.updateComplaint(complaintId, updates);
+        
+        // Update local data
+        updateLocalComplaint(complaintId, updates);
+        
+        // Show success message
+        showSuccess('Complaint updated successfully');
+        
+        // Refresh dashboard data
+        await loadDashboardStats();
+        updateDashboardComplaintsTable(allComplaints);
+    } catch (error) {
+        throw error;
+    }
+}, 'update complaint');
+
+// Update local complaint data
+function updateLocalComplaint(complaintId, updates) {
+    // Find and update complaint in allComplaints array
+    const index = allComplaints.findIndex(c => c.id == complaintId);
+    if (index !== -1) {
+        allComplaints[index] = {
+            ...allComplaints[index],
+            ...updates
+        };
+    }
+}
+
+// Delete complaint
 const deleteComplaint = withErrorHandling(async function(complaintId) {
+    // Confirm deletion
     const result = await Swal.fire({
         title: 'Delete Complaint',
-        text: `Are you sure you want to delete complaint #${complaintId}? This action cannot be undone.`,
+        text: 'Are you sure you want to delete this complaint? This action cannot be undone.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, delete it!',
+        confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel'
     });
     
     if (result.isConfirmed) {
-        // Remove from local list optimistically
-        allComplaints = allComplaints.filter(c => c.id != complaintId);
-        filteredComplaints = filteredComplaints.filter(c => c.id != complaintId);
-        displayComplaints(filteredComplaints);
-        
         try {
+            // Delete from API
             await api.deleteComplaint(complaintId);
             
-            Swal.fire({
-                icon: 'success',
-                title: 'Deleted',
-                text: `Complaint #${complaintId} has been deleted successfully`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+            // Remove from local data
+            allComplaints = allComplaints.filter(c => c.id != complaintId);
+            filteredComplaints = filteredComplaints.filter(c => c.id != complaintId);
             
-            // Refresh stats
+            // Show success message
+            showSuccess('Complaint deleted successfully');
+            
+            // Refresh data
+            updateDashboardComplaintsTable(allComplaints);
             await loadDashboardStats();
         } catch (error) {
-            // Revert on failure
-            await loadAllComplaints();
             throw error;
         }
     }
 }, 'delete complaint');
+
+// Load dashboard stats
+const loadDashboardStats = withErrorHandling(async function() {
+    // get stats from API
+    const stats = await api.getDashboardStats();
+    /*
+    try {
+        // get stats from API
+
+        /* commenting out mock data fallback
+        let stats;
+        try {
+            stats = await api.getDashboardStats();
+        } catch (error) {
+            console.warn('Could not fetch dashboard stats from API, using mock data instead');
+            const mockData = api.getMockDashboardData();
+            stats = {
+                pendingCount: mockData.pendingCount || 0,
+                inProgressCount: mockData.inProgressCount || 0,
+                resolvedCount: mockData.resolvedCount || 0,
+                totalUsers: mockData.totalUsers || 0
+            };
+        }
+        
+        updateDashboardStats(stats);
+        return stats;
+    } catch (error) {
+        throw error;
+    }*/
+    updateDashboardStats(stats);
+    return stats;
+}, 'load dashboard statistics');
 
 // Enhanced logout with confirmation
 function handleLogout() {
@@ -453,9 +854,9 @@ function handleLogout() {
 function startAutoRefresh() {
     setInterval(async () => {
         try {
-            await loadDashboardStats();
-            await loadAllComplaints();
-            console.log('Dashboard auto-refreshed');
+            const stats = await api.getDashboardStats();
+            updateDashboardStats(stats);
+            console.log('Dashboard stats auto-refreshed');
         } catch (error) {
             console.warn('Auto-refresh failed:', error);
         }
@@ -472,7 +873,7 @@ function handleKeyboardShortcuts(event) {
     
     // Escape key to clear search
     if (event.key === 'Escape') {
-        const searchInput = document.getElementById('searchInput');
+        const searchInput = document.querySelector('.search-input');
         if (searchInput && searchInput.value) {
             searchInput.value = '';
             handleSearch({ target: searchInput });
@@ -480,61 +881,93 @@ function handleKeyboardShortcuts(event) {
     }
 }
 
-// Utility functions
+// Show loading indicator
 function showLoading(show, message = 'Loading...') {
-    const spinner = document.getElementById('loadingSpinner');
-    if (spinner) {
-        spinner.style.display = show ? 'block' : 'none';
-        if (show && message) {
-            const loadingText = spinner.querySelector('p');
-            if (loadingText) loadingText.textContent = message;
+    // Create loading indicator if it doesn't exist
+    let loadingEl = document.getElementById('loadingIndicator');
+    
+    if (!loadingEl && show) {
+        loadingEl = document.createElement('div');
+        loadingEl.id = 'loadingIndicator';
+        loadingEl.className = 'loading-indicator';
+        loadingEl.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p class="loading-message">${message}</p>
+        `;
+        document.body.appendChild(loadingEl);
+    }
+    
+    if (loadingEl) {
+        if (show) {
+            loadingEl.classList.add('active');
+            const messageEl = loadingEl.querySelector('.loading-message');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+        } else {
+            loadingEl.classList.remove('active');
+            setTimeout(() => {
+                if (loadingEl && loadingEl.parentNode) {
+                    loadingEl.parentNode.removeChild(loadingEl);
+                }
+            }, 300);
         }
     }
 }
 
+// Show error message
 function showError(message) {
-    const errorDiv = document.getElementById('errorMessage');
-    const errorText = document.getElementById('errorText');
-    
-    if (errorDiv && errorText) {
-        errorText.textContent = message;
-        errorDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
-    }
-    
-    console.error('Dashboard Error:', message);
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: message,
+        toast: true,
+        position: 'top-end',
+        timer: 5000,
+        timerProgressBar: true,
+        showConfirmButton: false
+    });
 }
 
+// Show success message
 function showSuccess(message) {
     Swal.fire({
         icon: 'success',
         title: 'Success',
         text: message,
-        timer: 2000,
-        showConfirmButton: false,
         toast: true,
-        position: 'top-end'
+        position: 'top-end',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
     });
 }
 
+// Format date
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
+    
     try {
         const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    } catch {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
         return 'Invalid Date';
     }
 }
 
+// Truncate text
 function truncateText(text, maxLength) {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 }
 
+// Escape HTML to prevent XSS
 function escapeHtml(unsafe) {
     if (!unsafe) return '';
     return unsafe
@@ -546,25 +979,23 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+// Get next status in workflow
 function getNextStatus(currentStatus) {
-    return CONFIG.STATUS_FLOW[currentStatus] || 'in-progress';
+    return CONFIG.STATUS_FLOW[currentStatus] || 'in_progress';
 }
 
+// Get action text based on status
 function getActionText(status) {
     return CONFIG.ACTION_TEXTS[status] || 'Update';
 }
 
-// Refresh dashboard function (can be called externally)
-async function refreshDashboard() {
-    await initializeDashboard();
-}
-
 // Export functions for external use
 window.adminDashboard = {
-    refreshDashboard,
+    refreshDashboard: initializeDashboard,
     loadAllComplaints,
     loadDashboardStats,
-    updateComplaintStatus,
+    updateComplaint,
     deleteComplaint,
-    viewComplaint
+    viewComplaint,
+    editComplaintStatus
 };

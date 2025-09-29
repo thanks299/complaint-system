@@ -4,81 +4,361 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - NACOS Complaint System</title>
-    <link rel="icon" type="image/png" href="assets/National-Open_University-Nigeria.png">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="styles/index.css"> <!-- Use existing CSS -->
-    <link rel="stylesheet" href="styles/admin.css">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="./assets/National-Open_University-Nigeria.png" type="image/x-icon">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./styles/admin.css">
+    <link rel="stylesheet" href="./styles/responsive.css">
 </head>
 <body>
-    <header class="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-bar" placeholder="Search complaints...">
-            <button id="logoutBtn">Logout</button>
-        </div>
-    </header>
-
-    <!-- Statistics Cards -->
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="stat-number" id="totalComplaints">0</div>
-            <div>Total Complaints</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="pendingComplaints">0</div>
-            <div>Pending</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="resolvedComplaints">0</div>
-            <div>Resolved</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="totalUsers">0</div>
-            <div>Total Users</div>
-        </div>
-    </div>
-
-    <main>
-        <!-- Error Message Container -->
-        <div id="errorMessage" class="error-message" style="display: none;">
-            <p id="errorText"></p>
-        </div>
-
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
-            <p>Loading complaints...</p>
-        </div>
-
-        <!-- Complaints Section -->
-        <section class="complaints-section">
-            <h2 class="section-header">All Complaints</h2>
-            <div class="table-container">
-                <table id="complaintsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Complaints will be populated here -->
-                    </tbody>
-                </table>
-                
-                <!-- Empty State -->
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <p>No complaints found.</p>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <img src="./assets/National-Open_University-Nigeria.png" alt="NACOS Logo" class="sidebar-logo">
+                    <div class="logo-text">
+                        <h3>NACOS</h3>
+                        <span>Complaints System</span>
+                    </div>
+                </div>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active">
+                        <a href="#dashboard" class="nav-link" data-section="dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#complaints" class="nav-link" data-section="complaints">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Complaints</span>
+                            <span class="nav-badge">23</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#users" class="nav-link" data-section="users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#analytics" class="nav-link" data-section="analytics">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings" class="nav-link" data-section="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="admin-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="admin-info">
+                        <div class="admin-name">Admin User</div>
+                        <div class="admin-role">Administrator</div>
+                    </div>
                 </div>
             </div>
-        </section>
-    </main>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button class="mobile-menu-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">
+                            <i class="fas fa-home"></i>
+                            Dashboard
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" class="search-input" placeholder="Search...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-actions">
+                        <button class="nav-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        
+                        <div class="profile-dropdown">
+                            <button class="profile-btn">
+                                <div class="profile-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span class="profile-name">Admin</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            
+                            <div class="dropdown-menu">
+                                <a href="#profile" class="dropdown-item" data-action="profile">
+                                    <i class="fas fa-user-circle"></i>
+                                    My Profile
+                                </a>
+                                <a href="#settings" class="dropdown-item" data-action="settings">
+                                    <i class="fas fa-cog"></i>
+                                    Settings
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item" data-action="logout">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content Wrapper -->
+            <div class="content-wrapper" id="content-container">
+                <!-- Dashboard content will be loaded here dynamically -->
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Dashboard Overview
+                    </h1>
+                    <p class="section-subtitle">Welcome back! Here's what's happening with your complaints system.</p>
+                </div>
 
-    <script src="script/api.js"></script>
-    <script src="script/admindashboard.js"></script>
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="pending-count">23</div>
+                            <div class="stat-label">Pending Complaints</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12% from last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="inprogress-count">12</div>
+                            <div class="stat-label">In Progress</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8% from last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="resolved-count">121</div>
+                            <div class="stat-label">Resolved</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+24% from last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-users">89</div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+5% from last week</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3 class="subsection-title">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </h3>
+                    <div class="action-grid">
+                        <button class="action-btn primary" data-action="view-complaints">
+                            <i class="fas fa-list"></i>
+                            <span>View All Complaints</span>
+                        </button>
+                        <button class="action-btn secondary" data-action="add-user">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Add New User</span>
+                        </button>
+                        <button class="action-btn tertiary" data-action="generate-report">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Generate Report</span>
+                        </button>
+                        <button class="action-btn quaternary" data-action="system-settings">
+                            <i class="fas fa-cog"></i>
+                            <span>System Settings</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <div class="section-header">
+                        <h3 class="subsection-title">
+                            <i class="fas fa-history"></i>
+                            Recent Complaints
+                        </h3>
+                        <button class="table-btn" data-action="view-all-complaints">
+                            <i class="fas fa-eye"></i>
+                            View All
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="modern-table" id="dashboard-complaints-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Student</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-complaints-tbody">
+                                <tr>
+                                    <td><strong>NACOS-000001</strong></td>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-name">John Doe</div>
+                                            <div class="user-email">CS/2020/001</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="type-badge">Academic</span></td>
+                                    <td><span class="status-badge pending">Pending</span></td>
+                                    <td><span class="priority-badge medium">Medium</span></td>
+                                    <td>Jan 15, 2024</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="1">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="1">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>NACOS-000002</strong></td>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-name">Jane Smith</div>
+                                            <div class="user-email">CS/2020/002</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="type-badge">Technical</span></td>
+                                    <td><span class="status-badge in_progress">In Progress</span></td>
+                                    <td><span class="priority-badge high">High</span></td>
+                                    <td>Jan 14, 2024</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="2">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="2">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="2">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>NACOS-000003</strong></td>
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-name">Mike Johnson</div>
+                                            <div class="user-email">CS/2020/003</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="type-badge">Administrative</span></td>
+                                    <td><span class="status-badge resolved">Resolved</span></td>
+                                    <td><span class="priority-badge low">Low</span></td>
+                                    <td>Jan 13, 2024</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="3">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="3">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="3">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/admindashboard.js"></script>
+    <script src="./js/settings.js"></script>
+    <script src="./js/navigation.js"></script>
 </body>
 </html>

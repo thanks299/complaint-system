@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - NACOS Complaint System</title>
+</head>
+<body>
+    <div class="section-header">
+        <h1 class="section-title">
+            <i class="fas fa-cog"></i>
+            System Settings
+        </h1>
+        <p class="section-subtitle">Configure system preferences and administrative settings.</p>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="settings-tabs">
+        <button class="tab-btn active" data-tab="general">
+            <i class="fas fa-sliders-h"></i>
+            General
+        </button>
+        <button class="tab-btn" data-tab="notifications">
+            <i class="fas fa-bell"></i>
+            Notifications
+        </button>
+        <button class="tab-btn" data-tab="security">
+            <i class="fas fa-shield-alt"></i>
+            Security
+        </button>
+        <button class="tab-btn" data-tab="backup">
+            <i class="fas fa-database"></i>
+            Backup
+        </button>
+    </div>
+
+    <!-- General Settings -->
+    <div class="settings-panel active" id="general-panel">
+        <div class="settings-section">
+            <h3>System Configuration</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>System Name</label>
+                    <input type="text" class="setting-input" value="NACOS Complaint System">
+                </div>
+                <div class="setting-item">
+                    <label>Default Language</label>
+                    <select class="setting-select">
+                        <option value="en">English</option>
+                        <option value="fr">French</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Timezone</label>
+                    <select class="setting-select">
+                        <option value="UTC">UTC</option>
+                        <option value="WAT" selected>West Africa Time</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Auto-assign Complaints</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="auto-assign" checked>
+                        <label for="auto-assign"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="settings-panel" id="notifications-panel">
+        <div class="settings-section">
+            <h3>Email Notifications</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>New Complaint Notifications</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="new-complaint-email" checked>
+                        <label for="new-complaint-email"></label>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>Status Update Notifications</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="status-update-email" checked>
+                        <label for="status-update-email"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Settings Panel (Hidden by Default) -->
+    <div class="settings-panel" id="security-panel">
+        <div class="settings-section">
+            <h3>Security Options</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>Two-Factor Authentication</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="two-factor-auth">
+                        <label for="two-factor-auth"></label>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>Password Expiry (Days)</label>
+                    <input type="number" class="setting-input" value="90">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Settings Panel (Hidden by Default) -->
+    <div class="settings-panel" id="backup-panel">
+        <div class="settings-section">
+            <h3>Database Backup</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>Auto Backup</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="auto-backup" checked>
+                        <label for="auto-backup"></label>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>Backup Frequency</label>
+                    <select class="setting-select">
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="settings-actions">
+        <button class="btn-primary" data-action="save-settings">
+            <i class="fas fa-save"></i>
+            Save Settings
+        </button>
+        <button class="btn-secondary" data-action="reset-settings">
+            <i class="fas fa-undo"></i>
+            Reset to Default
+        </button>
+    </div>
+</body>
+</html>

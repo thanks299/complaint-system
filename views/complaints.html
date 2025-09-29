@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints Management - NACOS Complaint System</title>
+</head>
+<body>
+    <div class="section-header">
+        <h1 class="section-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Complaints Management
+        </h1>
+        <p class="section-subtitle">Manage and track all student complaints in the system.</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Status:</label>
+            <select class="filter-select" id="status-filter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Type:</label>
+            <select class="filter-select" id="type-filter">
+                <option value="">All Types</option>
+                <option value="academic">Academic</option>
+                <option value="technical">Technical</option>
+                <option value="administrative">Administrative</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Priority:</label>
+            <select class="filter-select" id="priority-filter">
+                <option value="">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+            </select>
+        </div>
+        <button class="filter-btn" data-action="apply-filters">
+            <i class="fas fa-filter"></i>
+            Apply Filters
+        </button>
+        <button class="filter-btn" data-action="clear-filters">
+            <i class="fas fa-times"></i>
+            Clear
+        </button>
+    </div>
+
+    <!-- Complaints Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3>All Complaints</h3>
+            <div class="table-actions">
+                <button class="table-btn" data-action="export-complaints">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="table-btn" data-action="refresh-complaints">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-loading" id="complaints-table-loading" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p>Loading complaints...</p>
+        </div>
+
+        <div class="table-empty" id="complaints-table-empty" style="display: none;">
+            <div class="empty-illustration">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <h3>No Complaints Found</h3>
+            <p>No complaints match your current filters.</p>
+        </div>
+
+        <table class="modern-table" id="complaints-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" class="table-checkbox" id="select-all-complaints">
+                    </th>
+                    <th>Ticket ID</th>
+                    <th>Student Info</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Date Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="complaints-tbody">
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox"></td>
+                    <td><strong>NACOS-000001</strong></td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-name">John Doe</div>
+                            <div class="user-email">CS/2020/001</div>
+                        </div>
+                    </td>
+                    <td><span class="type-badge">Academic</span></td>
+                    <td class="description-cell">Unable to access course materials online</td>
+                    <td><span class="status-badge pending">Pending</span></td>
+                    <td><span class="priority-badge medium">Medium</span></td>
+                    <td>Jan 15, 2024</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="1">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox"></td>
+                    <td><strong>NACOS-000002</strong></td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-name">Jane Smith</div>
+                            <div class="user-email">CS/2020/002</div>
+                        </div>
+                    </td>
+                    <td><span class="type-badge">Technical</span></td>
+                    <td class="description-cell">Password reset not working</td>
+                    <td><span class="status-badge in_progress">In Progress</span></td>
+                    <td><span class="priority-badge high">High</span></td>
+                    <td>Jan 14, 2024</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox"></td>
+                    <td><strong>NACOS-000003</strong></td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-name">Mike Johnson</div>
+                            <div class="user-email">CS/2020/003</div>
+                        </div>
+                    </td>
+                    <td><span class="type-badge">Administrative</span></td>
+                    <td class="description-cell">Transcript request delay</td>
+                    <td><span class="status-badge resolved">Resolved</span></td>
+                    <td><span class="priority-badge low">Low</span></td>
+                    <td>Jan 13, 2024</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="3">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="3">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="pagination-container" id="complaints-pagination">
+            <div class="pagination-info">
+                Showing <span id="complaints-showing">1-3</span> of <span id="complaints-total">3</span> complaints
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" id="complaints-prev" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                    Previous
+                </button>
+                <div class="pagination-numbers" id="complaints-page-numbers">
+                    <button class="pagination-btn active">1</button>
+                </div>
+                <button class="pagination-btn" id="complaints-next" disabled>
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

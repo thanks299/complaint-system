@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics & Reports - NACOS Complaint System</title>
+</head>
+<body>
+    <div class="section-header">
+        <h1 class="section-title">
+            <i class="fas fa-chart-bar"></i>
+            Analytics & Reports
+        </h1>
+        <p class="section-subtitle">Detailed insights and analytics for your complaint management system.</p>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Time Range:</label>
+            <select class="filter-select" id="time-range">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 3 months</option>
+                <option value="365">Last year</option>
+            </select>
+        </div>
+        <button class="filter-btn" data-action="generate-report">
+            <i class="fas fa-file-pdf"></i>
+            Generate Report
+        </button>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Complaints Trend</h3>
+                <div class="chart-actions">
+                    <button class="table-btn" data-action="export-chart">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="complaints-trend-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Status Distribution</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="status-distribution-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Complaint Types</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="types-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Resolution Time</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="resolution-time-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Summary -->
+    <div class="analytics-summary">
+        <h3 class="subsection-title">Key Metrics</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="avg-resolution-time">2.5 days</div>
+                    <div class="metric-label">Avg. Resolution Time</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="resolution-rate">78%</div>
+                    <div class="metric-label">Resolution Rate</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="satisfaction-score">4.2/5</div>
+                    <div class="metric-label">Satisfaction Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

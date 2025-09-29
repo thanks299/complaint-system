@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - NACOS Complaint System</title>
+</head>
+<body>
+    <div class="section-header">
+        <h1 class="section-title">
+            <i class="fas fa-users"></i>
+            User Management
+        </h1>
+        <p class="section-subtitle">Manage student and admin accounts in the system.</p>
+    </div>
+
+    <!-- User Stats -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="students-count">87</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="admins-count">2</div>
+                <div class="stat-label">Admin Users</div>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="active-users">78</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="new-users">12</div>
+                <div class="stat-label">New This Month</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Role:</label>
+            <select class="filter-select" id="role-filter">
+                <option value="">All Roles</option>
+                <option value="student">Students</option>
+                <option value="admin">Admins</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Status:</label>
+            <select class="filter-select" id="user-status-filter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+        <button class="filter-btn" data-action="add-new-user">
+            <i class="fas fa-user-plus"></i>
+            Add New User
+        </button>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3>All Users</h3>
+            <div class="table-actions">
+                <button class="table-btn" data-action="export-users">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="table-btn" data-action="refresh-users">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="table-loading" id="users-table-loading" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p>Loading users...</p>
+        </div>
+
+        <table class="modern-table" id="users-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" class="table-checkbox" id="select-all-users">
+                    </th>
+                    <th>ID</th>
+                    <th>User Info</th>
+                    <th>Role</th>
+                    <th>Registration</th>
+                    <th>Last Login</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody">
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox"></td>
+                    <td><strong>#1</strong></td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-name">John Doe</div>
+                            <div class="user-email">john.doe@example.com</div>
+                            <div class="user-regno">CS/2020/001</div>
+                        </div>
+                    </td>
+                    <td><span class="role-badge student">student</span></td>
+                    <td>Jan 1, 2024</td>
+                    <td>Jan 15, 2024</td>
+                    <td><span class="status-badge active">active</span></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-icon view" title="View Profile" data-action="view-user" data-id="1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon edit" title="Edit User" data-action="edit-user" data-id="1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-icon delete" title="Delete User" data-action="delete-user" data-id="1">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox"></td>
+                    <td><strong>#2</strong></td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-name">Admin User</div>
+                            <div class="user-email">admin@nacos.com</div>
+                        </div>
+                    </td>
+                    <td><span class="role-badge admin">admin</span></td>
+                    <td>Dec 1, 2023</td>
+                    <td>Jan 16, 2024</td>
+                    <td><span class="status-badge active">active</span></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-icon view" title="View Profile" data-action="view-user" data-id="2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon edit" title="Edit User" data-action="edit-user" data-id="2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-icon delete" title="Delete User" data-action="delete-user" data-id="2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
