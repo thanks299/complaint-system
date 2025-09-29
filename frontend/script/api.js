@@ -480,5 +480,5 @@ class APIService {
 // Initialize API service
 const api = new APIService();
 
-// For debugging - remove in production
-window.api = api;
+// // For debugging - remove in production
+// window.api = api;

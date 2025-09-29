@@ -98,11 +98,20 @@ function updateProfileInfo(username) {
     }
 }
 
+// Update dashboard statistics
+function updateDashboardStats(stats) {
+    // Update counter values with animation
+    updateStatCard('pending-count', stats.pendingCount);
+    updateStatCard('inprogress-count', stats.inProgressCount);
+    updateStatCard('resolved-count', stats.resolvedCount);
+    updateStatCard('total-users', stats.totalUsers);
+}
+
 // Enhanced dashboard initialization
 const initializeDashboard = withLoading(async function() {
     try {
         // Try to get data from API first
-        let dashboardData;
+        const dashboardData = await loadDashboardStats();
         /*
         try {
             dashboardData = await api.getDashboardStats();
@@ -123,15 +132,6 @@ const initializeDashboard = withLoading(async function() {
         throw error;
     }
 }, 'Loading dashboard...');
-
-// Update dashboard statistics
-function updateDashboardStats(stats) {
-    // Update counter values with animation
-    updateStatCard('pending-count', stats.pendingCount);
-    updateStatCard('inprogress-count', stats.inProgressCount);
-    updateStatCard('resolved-count', stats.resolvedCount);
-    updateStatCard('total-users', stats.totalUsers);
-}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -490,22 +490,22 @@ function animateCounter(element, start, end, duration) {
 
 // Enhanced complaint loading
 const loadAllComplaints = withErrorHandling(async function() {
-    /* COMMENT OUT MOCK DATA FALLBACK
     try {
-        // Try to get complaints from API first
+        // Get complaints from API
         allComplaints = await api.getComplaints();
+        filteredComplaints = [...allComplaints];
+
+        // Update the dashboard complaints table
+        updateDashboardComplaintsTable(allComplaints);
+
+        return allComplaints;
     } catch (error) {
-        console.warn('Could not fetch complaints from API, using mock data instead');
-        const mockData = api.getMockDashboardData();
-        allComplaints = mockData.recentComplaints || [];
-    }*/
-    
-    filteredComplaints = [...allComplaints];
-    
-    // Update the dashboard complaints table
-    updateDashboardComplaintsTable(allComplaints);
-    
-    return allComplaints;
+        console.error('Error loading complaints:', error);
+        allComplaints = [];
+        filteredComplaints = [];
+        updateDashboardComplaintsTable([]);
+        throw error;
+    }
 }, 'load complaints');
 
 // Update the dashboard complaints table
