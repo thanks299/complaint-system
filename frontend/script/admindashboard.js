@@ -98,29 +98,13 @@ function updateProfileInfo(username) {
     }
 }
 
-// Update dashboard statistics
-function updateDashboardStats(stats) {
-    // Update counter values with animation
-    updateStatCard('pending-count', stats.pendingCount);
-    updateStatCard('inprogress-count', stats.inProgressCount);
-    updateStatCard('resolved-count', stats.resolvedCount);
-    updateStatCard('total-users', stats.totalUsers);
-}
-
 // Enhanced dashboard initialization
 const initializeDashboard = withLoading(async function() {
     try {
-        // Try to get data from API first
+        // Load dashboard statistics first
         const dashboardData = await loadDashboardStats();
-        /*
-        try {
-            dashboardData = await api.getDashboardStats();
-        } catch (error) {
-            console.warn('Could not fetch dashboard data from API, using mock data instead');
-            dashboardData = api.getMockDashboardData();
-        }*/
         
-        // Update dashboard statistics
+        // Update dashboard statistics with the data
         updateDashboardStats(dashboardData);
         
         // Load complaints
@@ -129,9 +113,24 @@ const initializeDashboard = withLoading(async function() {
         showSuccess('Dashboard loaded successfully');
     } catch (error) {
         showError('Failed to load dashboard data. Please refresh the page.');
+        console.error('Dashboard initialization error:', error);
         throw error;
     }
 }, 'Loading dashboard...');
+
+// Update dashboard statistics
+function updateDashboardStats(stats) {
+    if (!stats) {
+        console.warn('No dashboard stats available to update');
+        return;
+    }
+    
+    // Update counter values with animation
+    updateStatCard('pending-count', stats.pendingCount || 0);
+    updateStatCard('inprogress-count', stats.inProgressCount || 0);
+    updateStatCard('resolved-count', stats.resolvedCount || 0);
+    updateStatCard('total-users', stats.totalUsers || 0);
+}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -488,22 +487,26 @@ function animateCounter(element, start, end, duration) {
     }, 16);
 }
 
-// Enhanced complaint loading
+// Enhanced complaint loading with better error handling
 const loadAllComplaints = withErrorHandling(async function() {
     try {
         // Get complaints from API
         allComplaints = await api.getComplaints();
         filteredComplaints = [...allComplaints];
-
+        
         // Update the dashboard complaints table
         updateDashboardComplaintsTable(allComplaints);
-
+        
         return allComplaints;
     } catch (error) {
         console.error('Error loading complaints:', error);
+        // Initialize with empty arrays if API fails
         allComplaints = [];
         filteredComplaints = [];
+        
+        // Update table to show empty state
         updateDashboardComplaintsTable([]);
+        
         throw error;
     }
 }, 'load complaints');
@@ -599,28 +602,27 @@ function setupTableActionButtons() {
     });
 }
 
-// View complaint details
+// View complaint details with improved error handling
 const viewComplaint = withErrorHandling(async function(complaintId) {
     // Show loading
     showLoading(true, 'Loading complaint details...');
     
     try {
-        // Get complaint from API - no mock data fallback
+        // Try to get complaint from API
         const complaint = await api.getComplaintById(complaintId);
-        /*
-        let complaint;
-        try {
-            complaint = await api.getComplaintById(complaintId);
-        } catch (error) {
-            console.warn('Could not fetch complaint details from API, using local data instead');
-            complaint = allComplaints.find(c => c.id == complaintId);
-            
-            if (!complaint) {
-                throw new Error('Complaint not found');
-            }
-        }*/
-        
         showComplaintModal(complaint);
+    } catch (error) {
+        console.error('Error fetching complaint details:', error);
+        
+        // Try to find complaint in local data as fallback
+        const localComplaint = allComplaints.find(c => c.id == complaintId);
+        
+        if (localComplaint) {
+            console.warn('Using locally cached complaint data as fallback');
+            showComplaintModal(localComplaint);
+        } else {
+            throw new Error('Complaint not found');
+        }
     } finally {
         showLoading(false);
     }
@@ -682,22 +684,23 @@ function showComplaintModal(complaint) {
     });
 }
 
-// Edit complaint status
+// Edit complaint status with improved error handling
 const editComplaintStatus = withErrorHandling(async function(complaintId) {
-    // Get complaint from API
-    const complaint = await api.getComplaintById(complaintId);
-    /* commenting out mock data fallback
     let complaint;
+    
     try {
+        // Try to get complaint from API
         complaint = await api.getComplaintById(complaintId);
     } catch (error) {
-        console.warn('Could not fetch complaint details from API, using local data instead');
+        console.error('Error fetching complaint for editing:', error);
+        
+        // Try to find complaint in local data as fallback
         complaint = allComplaints.find(c => c.id == complaintId);
         
         if (!complaint) {
             throw new Error('Complaint not found');
         }
-    }*/
+    }
     
     // Show edit status modal
     Swal.fire({
@@ -813,36 +816,26 @@ const deleteComplaint = withErrorHandling(async function(complaintId) {
     }
 }, 'delete complaint');
 
-// Load dashboard stats
+// Load dashboard stats with improved error handling
 const loadDashboardStats = withErrorHandling(async function() {
-    // get stats from API
-    const stats = await api.getDashboardStats();
-    /*
     try {
-        // get stats from API
-
-        /* commenting out mock data fallback
-        let stats;
-        try {
-            stats = await api.getDashboardStats();
-        } catch (error) {
-            console.warn('Could not fetch dashboard stats from API, using mock data instead');
-            const mockData = api.getMockDashboardData();
-            stats = {
-                pendingCount: mockData.pendingCount || 0,
-                inProgressCount: mockData.inProgressCount || 0,
-                resolvedCount: mockData.resolvedCount || 0,
-                totalUsers: mockData.totalUsers || 0
-            };
-        }
-        
+        // Try to get stats from API
+        const stats = await api.getDashboardStats();
         updateDashboardStats(stats);
         return stats;
     } catch (error) {
-        throw error;
-    }*/
-    updateDashboardStats(stats);
-    return stats;
+        console.error('Error loading dashboard stats:', error);
+        // Provide minimal fallback stats to prevent UI errors
+        const fallbackStats = {
+            pendingCount: 0,
+            inProgressCount: 0,
+            resolvedCount: 0,
+            totalUsers: 0
+        };
+        
+        updateDashboardStats(fallbackStats);
+        return fallbackStats;
+    }
 }, 'load dashboard statistics');
 
 // Enhanced logout with confirmation
@@ -987,6 +980,11 @@ function getNextStatus(currentStatus) {
 // Get action text based on status
 function getActionText(status) {
     return CONFIG.ACTION_TEXTS[status] || 'Update';
+}
+
+// Display complaints function for search results
+function displayComplaints(complaints) {
+    updateDashboardComplaintsTable(complaints);
 }
 
 // Export functions for external use
