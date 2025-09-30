@@ -4,51 +4,602 @@ let filteredComplaints = [];
 let searchTimeout;
 
 // Configuration constants
-const CONFIG = {
-  REFRESH_INTERVAL: 30000, // 30 seconds
-  SEARCH_DEBOUNCE: 300,    // 300ms
-  STATUS_FLOW: {
-    'pending': 'in_progress',
-    'in_progress': 'resolved', 
-    'resolved': 'pending'
-  },
-  ACTION_TEXTS: {
-    'pending': 'Start',
-    'in_progress': 'Resolve',
-    'resolved': 'Reopen'
-  }
+const REFRESH_INTERVAL = 300000; // 5 minutes
+const STATUS_COLORS = {
+    'Pending': '#ff9800',
+    'In Progress': '#2196f3',
+    'Resolved': '#4caf50',
+    'Closed': '#9e9e9e',
+    'Rejected': '#f44336'
 };
 
-// Initialize dashboard when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    checkAdminAuth();
-    initializeDashboard();
-    setupEventListeners();
-    startAutoRefresh();
-});
-
-// Enhanced error wrapper
-function withErrorHandling(asyncFunction, context = '') {
-  return async function(...args) {
-    try {
-      return await asyncFunction.apply(this, args);
-    } catch (error) {
-      console.error(`Error in ${context}:`, error);
-      showError(`Failed to ${context.toLowerCase()}. Please try again.`);
+// Main dashboard controller
+class AdminDashboard {
+    constructor() {
+        this.stats = {
+            pending: 0,
+            inProgress: 0,
+            resolved: 0,
+            totalUsers: 0
+        };
+        this.recentComplaints = [];
+        this.refreshInterval = null;
     }
-  };
-}
 
-// Enhanced loading wrapper
-function withLoading(asyncFunction, loadingMessage = 'Loading...') {
-  return async function(...args) {
-    showLoading(true, loadingMessage);
-    try {
-      return await asyncFunction.apply(this, args);
-    } finally {
-      showLoading(false);
+    // Initialize dashboard
+    async initialize() {
+        console.log('Initializing admin dashboard...');
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Load initial dashboard data
+        await this.refreshDashboard();
+        
+        // Set up automatic refresh interval
+        this.setupAutoRefresh();
     }
-  };
+    
+    // Set up dashboard event listeners
+    setupEventListeners() {
+        // Refresh button
+        const refreshBtn = document.getElementById('refresh-dashboard');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.refreshDashboard());
+        }
+        
+        // Quick action buttons
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const action = button.getAttribute('data-action');
+                this.handleQuickAction(action);
+            });
+        });
+        
+        // Profile dropdown toggle
+        const profileBtn = document.querySelector('.profile-btn');
+        if (profileBtn) {
+            profileBtn.addEventListener('click', () => {
+                const dropdown = document.querySelector('.dropdown-menu');
+                if (dropdown) {
+                    dropdown.classList.toggle('show');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.profile-dropdown')) {
+                    const dropdown = document.querySelector('.dropdown-menu');
+                    if (dropdown) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+        }
+    }
+    
+    // Load dashboard statistics and recent complaints
+    async refreshDashboard() {
+        try {
+            console.log('Refreshing dashboard data...');
+            this.showLoading(true);
+            
+            // Fetch dashboard data from API - no mock data
+            const response = await api.getDashboardStats();
+            
+            if (response && response.success) {
+                // Update stats
+                this.stats = response.stats || {
+                    pending: 0,
+                    inProgress: 0,
+                    resolved: 0,
+                    totalUsers: 0
+                };
+                
+                // Update recent complaints
+                this.recentComplaints = response.recentComplaints || [];
+                
+                // Update UI
+                this.updateStatsUI();
+                this.updateRecentComplaintsUI();
+                
+                console.log('Dashboard data refreshed successfully');
+            } else {
+                console.error('Failed to fetch dashboard data');
+                this.showError('Failed to load dashboard data');
+            }
+            
+            this.showLoading(false);
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+            this.showError('An error occurred while loading dashboard data');
+            this.showLoading(false);
+        }
+    }
+    
+    // Update statistics UI elements
+    updateStatsUI() {
+        // Update count elements
+        document.getElementById('pending-count').textContent = this.stats.pending;
+        document.getElementById('inprogress-count').textContent = this.stats.inProgress;
+        document.getElementById('resolved-count').textContent = this.stats.resolved;
+        document.getElementById('total-users').textContent = this.stats.totalUsers;
+    }
+    
+    // Update recent complaints table
+    updateRecentComplaintsUI() {
+        const tableBody = document.getElementById('dashboard-complaints-tbody');
+        if (!tableBody) return;
+        
+        if (this.recentComplaints && this.recentComplaints.length > 0) {
+            tableBody.innerHTML = '';
+            
+            this.recentComplaints.forEach(complaint => {
+                const row = document.createElement('tr');
+                
+                // Create status badge with appropriate color
+                const statusBadge = `
+                    <span class="status-badge" style="background-color: ${STATUS_COLORS[complaint.status] || '#9e9e9e'}">
+                        ${complaint.status}
+                    </span>
+                `;
+                
+                // Create priority indicator
+                const priorityClass = complaint.priority.toLowerCase();
+                const priorityBadge = `
+                    <span class="priority-badge ${priorityClass}">
+                        ${complaint.priority}
+                    </span>
+                `;
+                
+                // Create action buttons
+                const actions = `
+                    <div class="table-actions">
+                        <button class="action-icon view-btn" title="View Details" data-id="${complaint.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-icon edit-btn" title="Edit" data-id="${complaint.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Set row content
+                row.innerHTML = `
+                    <td>${complaint.id}</td>
+                    <td>${complaint.student}</td>
+                    <td>${complaint.type}</td>
+                    <td>${statusBadge}</td>
+                    <td>${priorityBadge}</td>
+                    <td>${this.formatDate(complaint.date)}</td>
+                    <td>${actions}</td>
+                `;
+                
+                // Add click handlers for the buttons
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to action buttons
+            tableBody.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const complaintId = btn.getAttribute('data-id');
+                    this.viewComplaintDetails(complaintId);
+                });
+            });
+            
+            tableBody.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const complaintId = btn.getAttribute('data-id');
+                    this.editComplaint(complaintId);
+                });
+            });
+        } else {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="no-data">No recent complaints found</td>
+                </tr>
+            `;
+        }
+    }
+    
+    // Format date for display
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        } catch (e) {
+            return dateString; // Return original if parsing fails
+        }
+    }
+    
+    // Handle quick action buttons
+    handleQuickAction(action) {
+        console.log(`Quick action clicked: ${action}`);
+        
+        switch(action) {
+            case 'view-complaints':
+                // Navigate to complaints section
+                if (window.navigationController) {
+                    window.navigationController.navigateToSection('complaints');
+                }
+                break;
+                
+            case 'add-user':
+                // Navigate to users section with create modal
+                if (window.navigationController) {
+                    window.navigationController.navigateToSection('users');
+                    // Show create user modal after navigation completes
+                    setTimeout(() => {
+                        if (window.usersController && window.usersController.showCreateUserModal) {
+                            window.usersController.showCreateUserModal();
+                        }
+                    }, 500);
+                }
+                break;
+                
+            case 'generate-report':
+                this.showReportGenerationModal();
+                break;
+                
+            case 'system-settings':
+                // Navigate to settings section
+                if (window.navigationController) {
+                    window.navigationController.navigateToSection('settings');
+                }
+                break;
+                
+            case 'logout':
+                this.handleLogout();
+                break;
+                
+            default:
+                console.warn(`Unknown action: ${action}`);
+        }
+    }
+    
+    // Handle logout action
+    async handleLogout() {
+        try {
+            await api.logout();
+        } catch (error) {
+            console.error('Error during logout:', error);
+            // Even if API call fails, clear local storage and redirect
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    }
+    
+    // Show report generation modal
+    showReportGenerationModal() {
+        Swal.fire({
+            title: 'Generate Report',
+            html: `
+                <div class="report-form">
+                    <div class="form-group">
+                        <label for="report-type">Report Type</label>
+                        <select id="report-type" class="swal2-input">
+                            <option value="complaints">Complaints Summary</option>
+                            <option value="users">User Activity</option>
+                            <option value="response-time">Response Time Analysis</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="report-period">Time Period</label>
+                        <select id="report-period" class="swal2-input">
+                            <option value="7days">Last 7 Days</option>
+                            <option value="30days">Last 30 Days</option>
+                            <option value="90days">Last 90 Days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="custom-date-range" style="display: none;">
+                        <div class="form-group">
+                            <label for="start-date">Start Date</label>
+                            <input type="date" id="start-date" class="swal2-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">End Date</label>
+                            <input type="date" id="end-date" class="swal2-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="report-format">Format</label>
+                        <select id="report-format" class="swal2-input">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+                </div>
+            `,
+            didOpen: () => {
+                // Show/hide custom date range based on selection
+                const periodSelect = document.getElementById('report-period');
+                const customDateRange = document.getElementById('custom-date-range');
+                
+                periodSelect.addEventListener('change', () => {
+                    if (periodSelect.value === 'custom') {
+                        customDateRange.style.display = 'block';
+                    } else {
+                        customDateRange.style.display = 'none';
+                    }
+                });
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Generate',
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                const reportType = document.getElementById('report-type').value;
+                const reportPeriod = document.getElementById('report-period').value;
+                const reportFormat = document.getElementById('report-format').value;
+                
+                let startDate, endDate;
+                if (reportPeriod === 'custom') {
+                    startDate = document.getElementById('start-date').value;
+                    endDate = document.getElementById('end-date').value;
+                    
+                    if (!startDate || !endDate) {
+                        Swal.showValidationMessage('Please select both start and end dates');
+                        return false;
+                    }
+                    
+                    if (new Date(startDate) > new Date(endDate)) {
+                        Swal.showValidationMessage('End date must be after start date');
+                        return false;
+                    }
+                }
+                
+                return {
+                    type: reportType,
+                    period: reportPeriod,
+                    format: reportFormat,
+                    startDate,
+                    endDate
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.generateReport(result.value);
+            }
+        });
+    }
+    
+    // Generate report based on user selection
+    async generateReport(reportConfig) {
+        try {
+            this.showLoading(true, 'Generating report...');
+            
+            console.log('Generating report with config:', reportConfig);
+            
+            // Call actual API endpoint for report generation
+            const response = await api.generateReport(reportConfig);
+            
+            this.showLoading(false);
+            
+            if (response && response.success) {
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Report Generated',
+                    text: `Your ${reportConfig.type} report has been generated successfully!`,
+                    confirmButtonText: 'Download',
+                    showCancelButton: true,
+                    cancelButtonText: 'Close'
+                }).then((result) => {
+                    if (result.isConfirmed && response.downloadUrl) {
+                        // Trigger download
+                        window.open(response.downloadUrl, '_blank');
+                    }
+                });
+            } else {
+                this.showError('Failed to generate report: ' + 
+                    (response?.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error generating report:', error);
+            this.showLoading(false);
+            this.showError('An error occurred while generating the report');
+        }
+    }
+    
+    // View complaint details
+    async viewComplaintDetails(complaintId) {
+        console.log('Viewing complaint details:', complaintId);
+        
+        try {
+            this.showLoading(true, 'Loading complaint details...');
+            
+            // Fetch detailed complaint data from API
+            const response = await api.getComplaintDetails(complaintId);
+            
+            this.showLoading(false);
+            
+            if (response && response.success && response.complaint) {
+                const complaint = response.complaint;
+                
+                Swal.fire({
+                    title: `Complaint ${complaint.id}`,
+                    html: `
+                        <div class="complaint-detail">
+                            <div class="complaint-detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Student:</span>
+                                    <span class="detail-value">${complaint.student}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Type:</span>
+                                    <span class="detail-value">${complaint.type}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Status:</span>
+                                    <span class="detail-value">
+                                        <span class="status-badge" style="background-color: ${STATUS_COLORS[complaint.status] || '#9e9e9e'}">
+                                            ${complaint.status}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Priority:</span>
+                                    <span class="detail-value">
+                                        <span class="priority-badge ${complaint.priority.toLowerCase()}">
+                                            ${complaint.priority}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Date:</span>
+                                    <span class="detail-value">${this.formatDate(complaint.date)}</span>
+                                </div>
+                            </div>
+                            <div class="complaint-description">
+                                <h4>Description</h4>
+                                <p>${complaint.description || 'No description provided'}</p>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update Status',
+                    cancelButtonText: 'Close'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.showStatusUpdateModal(complaintId);
+                    }
+                });
+            } else {
+                this.showError(`Failed to load complaint details: ${response?.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error loading complaint details:', error);
+            this.showLoading(false);
+            this.showError('An error occurred while loading complaint details');
+        }
+    }
+    
+    // Show modal to update complaint status
+    showStatusUpdateModal(complaintId) {
+        Swal.fire({
+            title: 'Update Status',
+            input: 'select',
+            inputOptions: {
+                'Pending': 'Pending',
+                'In Progress': 'In Progress',
+                'Resolved': 'Resolved',
+                'Closed': 'Closed',
+                'Rejected': 'Rejected'
+            },
+            inputPlaceholder: 'Select status',
+            showCancelButton: true,
+            confirmButtonText: 'Update',
+            cancelButtonText: 'Cancel',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Please select a status';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.updateComplaintStatus(complaintId, result.value);
+            }
+        });
+    }
+    
+    // Update complaint status
+    async updateComplaintStatus(complaintId, status) {
+        try {
+            this.showLoading(true, 'Updating status...');
+            
+            // Call API to update complaint status
+            const response = await api.updateComplaintStatus(complaintId, status);
+            
+            this.showLoading(false);
+            
+            if (response && response.success) {
+                // Refresh dashboard data to show updated status
+                await this.refreshDashboard();
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Status Updated',
+                    text: `Complaint ${complaintId} status updated to ${status}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } else {
+                this.showError(`Failed to update status: ${response?.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            this.showLoading(false);
+            this.showError('Failed to update complaint status');
+        }
+    }
+    
+    // Edit complaint
+    editComplaint(complaintId) {
+        console.log('Editing complaint:', complaintId);
+        
+        // Navigate to complaints section with edit parameter
+        if (window.navigationController) {
+            window.navigationController.navigateToSection('complaints', { 
+                action: 'edit',
+                id: complaintId
+            });
+        }
+    }
+    
+    // Set up auto-refresh
+    setupAutoRefresh() {
+        // Clear any existing interval
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+        }
+        
+        // Set up new interval
+        this.refreshInterval = setInterval(() => {
+            console.log('Auto-refreshing dashboard data...');
+            this.refreshDashboard();
+        }, REFRESH_INTERVAL);
+    }
+    
+    // Clean up when navigating away
+    cleanup() {
+        // Clear auto-refresh interval
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+        
+        console.log('Dashboard cleanup completed');
+    }
+    
+    // Show loading indicator
+    showLoading(show, message = 'Loading...') {
+        if (window.navigationController?.setLoadingState) {
+            window.navigationController.setLoadingState(show, message);
+        }
+    }
+    
+    // Show error message
+    showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+        });
+    }
 }
 
 // Check if user is authenticated as admin
@@ -59,31 +610,28 @@ function checkAdminAuth() {
     
     console.log("Auth check:", { role, username, token });
     
-    // For development - provide fallback admin access if needed
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        if (!token || !role || !username) {
-            // Set default admin credentials for development only
-            localStorage.setItem('role', 'admin');
-            localStorage.setItem('username', 'Admin User');
-            localStorage.setItem('authToken', 'dev-token-12345');
-            console.log('Development mode: Set default admin credentials');
-            return;
-        }
-    }
-    
-    if (!token || !role || !username) {
+    // Check if we have all required authentication data
+    if (!token || !username) {
+        console.error('Authentication failed: Missing token or username');
         Swal.fire({
             icon: 'warning',
-            title: 'Access Denied',
-            text: 'Please login to access the admin dashboard',
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
             allowOutsideClick: false
         }).then(() => {
             window.location.href = 'index.html';
         });
-        return;
+        return false;
     }
     
-    if (role !== 'admin') {
+    // Check if user has admin role - be flexible with role format
+    const isAdmin = role === 'admin' || 
+                   role === 'ADMIN' || 
+                   role === 'administrator' || 
+                   role === 'Administrator';
+    
+    if (!isAdmin) {
+        console.error('Authentication failed: Not an admin role', { role });
         Swal.fire({
             icon: 'error',
             title: 'Unauthorized Access',
@@ -92,924 +640,60 @@ function checkAdminAuth() {
         }).then(() => {
             window.location.href = 'index.html';
         });
-        return;
+        return false;
     }
 
-    // Update profile information
+    // If we get here, authentication is successful
+    console.log('Authentication successful. Welcome admin:', username);
+    
+    // Update profile information throughout the UI
     updateProfileInfo(username);
+    return true;
 }
 
-// Update profile information in sidebar and header
+// Update profile information in UI elements
 function updateProfileInfo(username) {
-    // Update admin name in sidebar
-    const adminNameElem = document.querySelector('.admin-name');
-    if (adminNameElem) {
-        adminNameElem.textContent = username;
+    // Update sidebar profile
+    const sidebarAdminName = document.querySelector('.sidebar .admin-name');
+    if (sidebarAdminName) {
+        sidebarAdminName.textContent = username;
     }
     
-    // Update profile name in header
-    const profileNameElem = document.querySelector('.profile-name');
-    if (profileNameElem) {
-        profileNameElem.textContent = username;
+    // Update top navbar profile
+    const topNavProfileName = document.querySelector('.profile-name');
+    if (topNavProfileName) {
+        topNavProfileName.textContent = username;
     }
 }
 
-// Enhanced dashboard initialization
-const initializeDashboard = withLoading(async function() {
-    try {
-        // Load dashboard statistics first
-        const dashboardData = await loadDashboardStats();
+// Document ready event to initialize the dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin Dashboard initializing...');
+    
+    // First check authentication
+    if (checkAdminAuth()) {
+        console.log('Admin Dashboard initialized successfully');
         
-        // Update dashboard statistics with the data
-        updateDashboardStats(dashboardData);
+        // Create dashboard controller
+        window.adminDashboard = new AdminDashboard();
+        window.adminDashboard.initialize();
         
-        // Load complaints
-        await loadAllComplaints();
-        
-        showSuccess('Dashboard loaded successfully');
-    } catch (error) {
-        showError('Failed to load dashboard data. Please refresh the page.');
-        console.error('Dashboard initialization error:', error);
-        throw error;
-    }
-}, 'Loading dashboard...');
-
-// Update dashboard statistics
-function updateDashboardStats(stats) {
-    if (!stats) {
-        console.warn('No dashboard stats available to update');
-        return;
-    }
-    
-    // Update counter values with animation
-    updateStatCard('pending-count', stats.pendingCount || 0);
-    updateStatCard('inprogress-count', stats.inProgressCount || 0);
-    updateStatCard('resolved-count', stats.resolvedCount || 0);
-    updateStatCard('total-users', stats.totalUsers || 0);
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Navigation links
-    setupNavigationEvents();
-    
-    // Search functionality
-    setupSearchFunctionality();
-    
-    // Profile dropdown toggle
-    setupProfileDropdown();
-    
-    // Quick action buttons
-    setupQuickActionButtons();
-    
-    // Table action buttons (will be set up when table is populated)
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', handleKeyboardShortcuts);
-}
-
-// Set up navigation events
-function setupNavigationEvents() {
-    // Sidebar nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const section = link.getAttribute('data-section');
-            if (section) {
-                e.preventDefault();
-                activateNavItem(section);
-            }
-        });
-    });
-    
-    // Sidebar toggle
-    const sidebarToggle = document.querySelector('.sidebar-toggle');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('collapsed');
-            document.querySelector('.main-content').classList.toggle('expanded');
-        });
-    }
-    
-    // Mobile menu button
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-    }
-    
-    // Logout functionality
-    document.querySelectorAll('[data-action="logout"]').forEach(btn => {
-        btn.addEventListener('click', handleLogout);
-    });
-}
-
-// Set active navigation item
-function activateNavItem(section) {
-    // Remove active class from all nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // Add active class to selected nav item
-    const navItem = document.querySelector(`.nav-link[data-section="${section}"]`).parentNode;
-    if (navItem) {
-        navItem.classList.add('active');
-    }
-    
-    // Update breadcrumb
-    const breadcrumb = document.querySelector('.breadcrumb');
-    if (breadcrumb) {
-        breadcrumb.innerHTML = `
-            <span class="breadcrumb-item">
-                <i class="fas fa-home"></i>
-                <a href="#dashboard">Dashboard</a>
-            </span>
-            ${section !== 'dashboard' ? `
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-item active">
-                ${section.charAt(0).toUpperCase() + section.slice(1)}
-            </span>` : ''}
-        `;
-    }
-}
-
-// Set up search functionality
-function setupSearchFunctionality() {
-    const searchInput = document.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', handleSearchDebounced);
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleSearch(e);
-            }
-        });
-    }
-}
-
-// Set up profile dropdown
-function setupProfileDropdown() {
-    const profileBtn = document.querySelector('.profile-btn');
-    const dropdownMenu = document.querySelector('.dropdown-menu');
-    
-    if (profileBtn && dropdownMenu) {
-        profileBtn.addEventListener('click', () => {
-            dropdownMenu.classList.toggle('show');
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
-            }
-        });
-    }
-}
-
-// Set up quick action buttons
-function setupQuickActionButtons() {
-    document.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.getAttribute('data-action');
-            handleQuickAction(action);
-        });
-    });
-}
-
-// Handle quick action clicks
-function handleQuickAction(action) {
-    console.log(`Quick action: ${action}`);
-    
-    switch(action) {
-        case 'view-complaints':
-            activateNavItem('complaints');
-            break;
-        case 'add-user':
-            activateNavItem('users');
-            showAddUserModal();
-            break;
-        case 'generate-report':
-            activateNavItem('analytics');
-            showGenerateReportModal();
-            break;
-        case 'system-settings':
-            activateNavItem('settings');
-            break;
-        default:
-            console.warn(`Unknown action: ${action}`);
-    }
-}
-
-// Show add user modal
-function showAddUserModal() {
-    Swal.fire({
-        title: 'Add New User',
-        html: `
-            <form id="add-user-form">
-                <div class="swal2-input-container">
-                    <input id="name" class="swal2-input" placeholder="Full Name">
-                    <input id="email" class="swal2-input" placeholder="Email Address">
-                    <select id="role" class="swal2-select">
-                        <option value="">Select Role</option>
-                        <option value="student">Student</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                    <input id="password" type="password" class="swal2-input" placeholder="Password">
-                </div>
-            </form>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Add User',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const role = document.getElementById('role').value;
-            const password = document.getElementById('password').value;
-            
-            if (!name || !email || !role || !password) {
-                Swal.showValidationMessage('Please fill all fields');
-                return false;
-            }
-            
-            return { name, email, role, password };
-        },
-        allowOutsideClick: () => !Swal.isLoading()
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Call API to create user
-            createUser(result.value);
-        }
-    });
-}
-
-// Create new user
-const createUser = withErrorHandling(async function(userData) {
-    await api.createUser(userData);
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'User Created',
-        text: `User ${userData.name} has been created successfully`,
-        timer: 2000,
-        showConfirmButton: false
-    });
-}, 'create user');
-
-// Show generate report modal
-function showGenerateReportModal() {
-    Swal.fire({
-        title: 'Generate Report',
-        html: `
-            <form id="report-form">
-                <div class="swal2-input-container">
-                    <select id="report-type" class="swal2-select">
-                        <option value="">Select Report Type</option>
-                        <option value="complaints">Complaints Report</option>
-                        <option value="users">Users Report</option>
-                        <option value="analytics">Analytics Report</option>
-                    </select>
-                    <select id="report-format" class="swal2-select">
-                        <option value="pdf">PDF</option>
-                        <option value="csv">CSV</option>
-                        <option value="excel">Excel</option>
-                    </select>
-                    <div class="date-range-container">
-                        <label for="start-date">Start Date</label>
-                        <input id="start-date" type="date" class="swal2-input">
-                        <label for="end-date">End Date</label>
-                        <input id="end-date" type="date" class="swal2-input">
-                    </div>
-                </div>
-            </form>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Generate',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            const reportType = document.getElementById('report-type').value;
-            const reportFormat = document.getElementById('report-format').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            
-            if (!reportType || !reportFormat) {
-                Swal.showValidationMessage('Please select report type and format');
-                return false;
-            }
-            
-            return { reportType, reportFormat, startDate, endDate };
-        },
-        allowOutsideClick: () => !Swal.isLoading()
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Call API to generate report
-            generateReport(result.value);
-        }
-    });
-}
-
-// Generate report
-const generateReport = withErrorHandling(async function(reportData) {
-    // Show generating message
-    Swal.fire({
-        title: 'Generating Report',
-        text: 'Please wait while we generate your report...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    try {
-        // Call API to generate report
-        const result = await api.generateReport(reportData.reportFormat, {
-            type: reportData.reportType,
-            startDate: reportData.startDate,
-            endDate: reportData.endDate
-        });
-        
-        // Show success and provide download link
-        Swal.fire({
-            icon: 'success',
-            title: 'Report Generated',
-            html: `
-                <p>Your report has been generated successfully.</p>
-                <a href="${result.downloadUrl}" class="download-link" target="_blank">
-                    <i class="fas fa-download"></i> Download Report
-                </a>
-            `,
-            confirmButtonText: 'Close'
-        });
-    } catch (error) {
-        throw error;
-    }
-}, 'generate report');
-
-// Debounced search handler
-function handleSearchDebounced(event) {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        handleSearch(event);
-    }, CONFIG.SEARCH_DEBOUNCE);
-}
-
-// Enhanced search functionality
-function handleSearch(event) {
-    const searchTerm = event.target.value.toLowerCase().trim();
-    
-    if (!searchTerm) {
-        filteredComplaints = [...allComplaints];
-    } else {
-        filteredComplaints = allComplaints.filter(complaint => {
-            const searchableFields = [
-                complaint.title || complaint.subject || '',
-                complaint.description || complaint.message || '',
-                complaint.username || complaint.studentName || '',
-                complaint.status || '',
-                complaint.id?.toString() || complaint.ticketId || ''
-            ];
-            
-            return searchableFields.some(field => 
-                field.toLowerCase().includes(searchTerm)
-            );
-        });
-    }
-    
-    displayComplaints(filteredComplaints);
-}
-
-// Animated stat card update
-function updateStatCard(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        const currentValue = parseInt(element.textContent) || 0;
-        animateCounter(element, currentValue, value, 1000);
-    }
-}
-
-// Counter animation
-function animateCounter(element, start, end, duration) {
-    const range = end - start;
-    const increment = range / (duration / 16);
-    let current = start;
-    
-    const timer = setInterval(() => {
-        current += increment;
-        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-            current = end;
-            clearInterval(timer);
-        }
-        element.textContent = Math.round(current);
-    }, 16);
-}
-
-// Enhanced complaint loading with better error handling
-const loadAllComplaints = withErrorHandling(async function() {
-    try {
-        // Get complaints from API
-        allComplaints = await api.getComplaints();
-        filteredComplaints = [...allComplaints];
-        
-        // Update the dashboard complaints table
-        updateDashboardComplaintsTable(allComplaints);
-        
-        return allComplaints;
-    } catch (error) {
-        console.error('Error loading complaints:', error);
-        // Initialize with empty arrays if API fails
-        allComplaints = [];
-        filteredComplaints = [];
-        
-        // Update table to show empty state
-        updateDashboardComplaintsTable([]);
-        
-        throw error;
-    }
-}, 'load complaints');
-
-// Update the dashboard complaints table
-function updateDashboardComplaintsTable(complaints) {
-    const tbody = document.getElementById('dashboard-complaints-tbody');
-    if (!tbody) return;
-    
-    // Clear current content
-    tbody.innerHTML = '';
-    
-    // If no complaints, show empty state
-    if (!complaints || complaints.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-table-message">
-                    <div class="table-empty">
-                        <div class="empty-illustration">
-                            <i class="fas fa-inbox"></i>
-                        </div>
-                        <h4>No complaints found</h4>
-                        <p>There are no complaints to display at this time.</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Add complaints to table
-    complaints.slice(0, 5).forEach(complaint => {
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td><strong>${complaint.ticketId || `NACOS-${String(complaint.id).padStart(6, '0')}`}</strong></td>
-            <td>
-                <div class="user-info">
-                    <div class="user-name">${escapeHtml(complaint.studentName || complaint.username || 'Unknown')}</div>
-                    <div class="user-email">${escapeHtml(complaint.studentId || complaint.email || 'N/A')}</div>
-                </div>
-            </td>
-            <td><span class="type-badge">${complaint.type || 'General'}</span></td>
-            <td><span class="status-badge ${complaint.status || 'pending'}">${complaint.status || 'pending'}</span></td>
-            <td><span class="priority-badge ${complaint.priority || 'medium'}">${complaint.priority || 'medium'}</span></td>
-            <td>${formatDate(complaint.dateCreated || complaint.created_at)}</td>
-            <td>
-                <div class="table-actions">
-                    <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="${complaint.id}">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-icon edit" title="Edit Status" data-action="edit-complaint" data-id="${complaint.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-icon delete" title="Delete" data-action="delete-complaint" data-id="${complaint.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-    
-    // Add event listeners to the newly created buttons
-    setupTableActionButtons();
-}
-
-// Set up table action buttons
-function setupTableActionButtons() {
-    // View buttons
-    document.querySelectorAll('[data-action="view-complaint"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            viewComplaint(id);
-        });
-    });
-    
-    // Edit buttons
-    document.querySelectorAll('[data-action="edit-complaint"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            editComplaintStatus(id);
-        });
-    });
-    
-    // Delete buttons
-    document.querySelectorAll('[data-action="delete-complaint"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            deleteComplaint(id);
-        });
-    });
-}
-
-// View complaint details with improved error handling
-const viewComplaint = withErrorHandling(async function(complaintId) {
-    // Show loading
-    showLoading(true, 'Loading complaint details...');
-    
-    try {
-        // Try to get complaint from API
-        const complaint = await api.getComplaintById(complaintId);
-        showComplaintModal(complaint);
-    } catch (error) {
-        console.error('Error fetching complaint details:', error);
-        
-        // Try to find complaint in local data as fallback
-        const localComplaint = allComplaints.find(c => c.id == complaintId);
-        
-        if (localComplaint) {
-            console.warn('Using locally cached complaint data as fallback');
-            showComplaintModal(localComplaint);
-        } else {
-            throw new Error('Complaint not found');
-        }
-    } finally {
-        showLoading(false);
-    }
-}, 'view complaint details');
-
-// Show complaint details in a modal
-function showComplaintModal(complaint) {
-    Swal.fire({
-        title: `Complaint Details`,
-        html: `
-            <div class="complaint-detail-grid">
-                <div class="detail-group">
-                    <label>ID:</label>
-                    <div>${complaint.ticketId || `NACOS-${String(complaint.id).padStart(6, '0')}`}</div>
-                </div>
-                <div class="detail-group">
-                    <label>Student:</label>
-                    <div>${escapeHtml(complaint.studentName || complaint.username || 'N/A')}</div>
-                </div>
-                <div class="detail-group">
-                    <label>Student ID:</label>
-                    <div>${escapeHtml(complaint.studentId || 'N/A')}</div>
-                </div>
-                <div class="detail-group">
-                    <label>Date:</label>
-                    <div>${formatDate(complaint.dateCreated || complaint.created_at)}</div>
-                </div>
-                <div class="detail-group">
-                    <label>Type:</label>
-                    <div><span class="type-badge">${complaint.type || 'General'}</span></div>
-                </div>
-                <div class="detail-group">
-                    <label>Status:</label>
-                    <div><span class="status-badge ${complaint.status || 'pending'}">${complaint.status || 'pending'}</span></div>
-                </div>
-                <div class="detail-group">
-                    <label>Priority:</label>
-                    <div><span class="priority-badge ${complaint.priority || 'medium'}">${complaint.priority || 'medium'}</span></div>
-                </div>
-                <div class="detail-group full-width">
-                    <label>Subject:</label>
-                    <div>${escapeHtml(complaint.subject || complaint.title || 'N/A')}</div>
-                </div>
-                <div class="detail-group full-width">
-                    <label>Description:</label>
-                    <div class="complaint-description">${escapeHtml(complaint.description || complaint.message || 'No description provided').replace(/\n/g, '<br>')}</div>
-                </div>
-            </div>
-        `,
-        width: 700,
-        showCloseButton: true,
-        showCancelButton: true,
-        confirmButtonText: 'Update Status',
-        cancelButtonText: 'Close'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            editComplaintStatus(complaint.id);
-        }
-    });
-}
-
-// Edit complaint status with improved error handling
-const editComplaintStatus = withErrorHandling(async function(complaintId) {
-    let complaint;
-    
-    try {
-        // Try to get complaint from API
-        complaint = await api.getComplaintById(complaintId);
-    } catch (error) {
-        console.error('Error fetching complaint for editing:', error);
-        
-        // Try to find complaint in local data as fallback
-        complaint = allComplaints.find(c => c.id == complaintId);
-        
-        if (!complaint) {
-            throw new Error('Complaint not found');
-        }
-    }
-    
-    // Show edit status modal
-    Swal.fire({
-        title: 'Update Complaint Status',
-        html: `
-            <form id="edit-status-form">
-                <div class="form-group">
-                    <label>Status:</label>
-                    <select class="swal2-select" id="status-select">
-                        <option value="pending" ${(complaint.status === 'pending') ? 'selected' : ''}>Pending</option>
-                        <option value="in_progress" ${(complaint.status === 'in_progress') ? 'selected' : ''}>In Progress</option>
-                        <option value="resolved" ${(complaint.status === 'resolved') ? 'selected' : ''}>Resolved</option>
-                        <option value="closed" ${(complaint.status === 'closed') ? 'selected' : ''}>Closed</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Priority:</label>
-                    <select class="swal2-select" id="priority-select">
-                        <option value="low" ${(complaint.priority === 'low') ? 'selected' : ''}>Low</option>
-                        <option value="medium" ${(complaint.priority === 'medium') ? 'selected' : ''}>Medium</option>
-                        <option value="high" ${(complaint.priority === 'high') ? 'selected' : ''}>High</option>
-                        <option value="urgent" ${(complaint.priority === 'urgent') ? 'selected' : ''}>Urgent</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Resolution Note:</label>
-                    <textarea class="swal2-textarea" id="resolution-note" rows="4" 
-                        placeholder="Add notes about the resolution or status change">${complaint.resolutionNote || ''}</textarea>
-                </div>
-            </form>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Update',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            const status = document.getElementById('status-select').value;
-            const priority = document.getElementById('priority-select').value;
-            const resolutionNote = document.getElementById('resolution-note').value;
-            
-            return { status, priority, resolutionNote };
-        },
-        allowOutsideClick: () => !Swal.isLoading()
-    }).then((result) => {
-        if (result.isConfirmed) {
-            updateComplaint(complaintId, result.value);
-        }
-    });
-}, 'edit complaint status');
-
-// Update complaint
-const updateComplaint = withErrorHandling(async function(complaintId, updates) {
-    try {
-        // Update complaint via API
-        await api.updateComplaint(complaintId, updates);
-        
-        // Update local data
-        updateLocalComplaint(complaintId, updates);
-        
-        // Show success message
-        showSuccess('Complaint updated successfully');
-        
-        // Refresh dashboard data
-        await loadDashboardStats();
-        updateDashboardComplaintsTable(allComplaints);
-    } catch (error) {
-        throw error;
-    }
-}, 'update complaint');
-
-// Update local complaint data
-function updateLocalComplaint(complaintId, updates) {
-    // Find and update complaint in allComplaints array
-    const index = allComplaints.findIndex(c => c.id == complaintId);
-    if (index !== -1) {
-        allComplaints[index] = {
-            ...allComplaints[index],
-            ...updates
-        };
-    }
-}
-
-// Delete complaint
-const deleteComplaint = withErrorHandling(async function(complaintId) {
-    // Confirm deletion
-    const result = await Swal.fire({
-        title: 'Delete Complaint',
-        text: 'Are you sure you want to delete this complaint? This action cannot be undone.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel'
-    });
-    
-    if (result.isConfirmed) {
-        try {
-            // Delete from API
-            await api.deleteComplaint(complaintId);
-            
-            // Remove from local data
-            allComplaints = allComplaints.filter(c => c.id != complaintId);
-            filteredComplaints = filteredComplaints.filter(c => c.id != complaintId);
-            
-            // Show success message
-            showSuccess('Complaint deleted successfully');
-            
-            // Refresh data
-            updateDashboardComplaintsTable(allComplaints);
-            await loadDashboardStats();
-        } catch (error) {
-            throw error;
-        }
-    }
-}, 'delete complaint');
-
-// Load dashboard stats with improved error handling
-const loadDashboardStats = withErrorHandling(async function() {
-    try {
-        // Try to get stats from API
-        const stats = await api.getDashboardStats();
-        updateDashboardStats(stats);
-        return stats;
-    } catch (error) {
-        console.error('Error loading dashboard stats:', error);
-        // Provide minimal fallback stats to prevent UI errors
-        const fallbackStats = {
-            pendingCount: 0,
-            inProgressCount: 0,
-            resolvedCount: 0,
-            totalUsers: 0
-        };
-        
-        updateDashboardStats(fallbackStats);
-        return fallbackStats;
-    }
-}, 'load dashboard statistics');
-
-// Enhanced logout with confirmation
-function handleLogout() {
-    api.logout(true);
-}
-
-// Auto-refresh functionality
-function startAutoRefresh() {
-    setInterval(async () => {
-        try {
-            const stats = await api.getDashboardStats();
-            updateDashboardStats(stats);
-            console.log('Dashboard stats auto-refreshed');
-        } catch (error) {
-            console.warn('Auto-refresh failed:', error);
-        }
-    }, CONFIG.REFRESH_INTERVAL);
-}
-
-// Keyboard shortcuts
-function handleKeyboardShortcuts(event) {
-    // Ctrl/Cmd + R for refresh
-    if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
-        event.preventDefault();
-        initializeDashboard();
-    }
-    
-    // Escape key to clear search
-    if (event.key === 'Escape') {
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput && searchInput.value) {
-            searchInput.value = '';
-            handleSearch({ target: searchInput });
-        }
-    }
-}
-
-// Show loading indicator
-function showLoading(show, message = 'Loading...') {
-    // Create loading indicator if it doesn't exist
-    let loadingEl = document.getElementById('loadingIndicator');
-    
-    if (!loadingEl && show) {
-        loadingEl = document.createElement('div');
-        loadingEl.id = 'loadingIndicator';
-        loadingEl.className = 'loading-indicator';
-        loadingEl.innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-            </div>
-            <p class="loading-message">${message}</p>
-        `;
-        document.body.appendChild(loadingEl);
-    }
-    
-    if (loadingEl) {
-        if (show) {
-            loadingEl.classList.add('active');
-            const messageEl = loadingEl.querySelector('.loading-message');
-            if (messageEl) {
-                messageEl.textContent = message;
-            }
-        } else {
-            loadingEl.classList.remove('active');
-            setTimeout(() => {
-                if (loadingEl && loadingEl.parentNode) {
-                    loadingEl.parentNode.removeChild(loadingEl);
+        // Register with navigation system if available
+        if (window.navigationController && window.navigationController.registerSectionComponent) {
+            window.navigationController.registerSectionComponent('dashboard', {
+                init: () => {
+                    console.log('Dashboard section initialized via navigation system');
+                    window.adminDashboard.refreshDashboard();
+                },
+                cleanup: () => {
+                    console.log('Dashboard section cleanup via navigation system');
+                    window.adminDashboard.cleanup();
+                },
+                refresh: () => {
+                    console.log('Dashboard section refreshed via navigation system');
+                    window.adminDashboard.refreshDashboard();
                 }
-            }, 300);
+            });
         }
     }
-}
-
-// Show error message
-function showError(message) {
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: message,
-        toast: true,
-        position: 'top-end',
-        timer: 5000,
-        timerProgressBar: true,
-        showConfirmButton: false
-    });
-}
-
-// Show success message
-function showSuccess(message) {
-    Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: message,
-        toast: true,
-        position: 'top-end',
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-    });
-}
-
-// Format date
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    } catch (error) {
-        return 'Invalid Date';
-    }
-}
-
-// Truncate text
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(unsafe) {
-    if (!unsafe) return '';
-    return unsafe
-        .toString()
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-// Get next status in workflow
-function getNextStatus(currentStatus) {
-    return CONFIG.STATUS_FLOW[currentStatus] || 'in_progress';
-}
-
-// Get action text based on status
-function getActionText(status) {
-    return CONFIG.ACTION_TEXTS[status] || 'Update';
-}
-
-// Display complaints function for search results
-function displayComplaints(complaints) {
-    updateDashboardComplaintsTable(complaints);
-}
-
-// Export functions for external use
-window.adminDashboard = {
-    refreshDashboard: initializeDashboard,
-    loadAllComplaints,
-    loadDashboardStats,
-    updateComplaint,
-    deleteComplaint,
-    viewComplaint,
-    editComplaintStatus
-};
+});
