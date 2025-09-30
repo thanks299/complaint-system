@@ -154,11 +154,14 @@ class AdminDashboard {
             
             this.recentComplaints.forEach(complaint => {
                 const row = document.createElement('tr');
+
+                // Normalize status for display
+                const normalizedStatus = this.normalizeStatus(complaint.status);
                 
                 // Create status badge with appropriate color
                 const statusBadge = `
-                    <span class="status-badge" style="background-color: ${STATUS_COLORS[complaint.status] || '#9e9e9e'}">
-                        ${complaint.status}
+                    <span class="status-badge" style="background-color: ${STATUS_COLORS[normalizedStatus] || '#9e9e9e'}">
+                        ${normalizedStatus}
                     </span>
                 `;
                 
@@ -218,6 +221,23 @@ class AdminDashboard {
                 </tr>
             `;
         }
+    }
+
+    // Add this helper method to normalize status
+    normalizeStatus(status) {
+        if (!status) return 'Pending';
+  
+        // Convert to standard format
+        const statusLower = status.toLowerCase();
+  
+        if (statusLower === 'pending') return 'Pending';
+        if (statusLower === 'in-progress' || statusLower === 'inprogress' || statusLower === 'in_progress') return 'In Progress';
+        if (statusLower === 'resolved') return 'Resolved';
+        if (statusLower === 'closed') return 'Closed';
+        if (statusLower === 'rejected') return 'Rejected';
+  
+        // If unknown, capitalize first letter
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
     
     // Format date for display

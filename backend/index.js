@@ -313,9 +313,9 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
   }
 
   try {
-    console.log('Fetching dashboard stats...');
+    console.log('🔄 Fetching dashboard stats...');
     
-    // Get complaint counts by status
+    // Get complaint counts by status using RPC
     const { data: statusCounts, error: countsError } = await db
       .rpc('get_complaint_status_counts');
     
@@ -323,6 +323,8 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
       console.error('Error getting complaint counts:', countsError);
       throw countsError;
     }
+    
+    console.log('Status counts from RPC:', statusCounts);
     
     // Get recent complaints
     const { data: recentComplaints, error: complaintsError } = await db
@@ -343,21 +345,48 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
     
     if (usersError) {
       console.error('Error getting user count:', usersError);
-      throw usersError;
+      // Don't fail completely if just user count fails
+      // Just set totalUsers to 0
     }
 
-    // Format the response
+    // Format the response with correct status mapping
     const stats = {
-      pending: statusCounts.find(item => item.status === 'pending')?.count || 0,
-      inProgress: statusCounts.find(item => item.status === 'in-progress')?.count || 0,
-      resolved: statusCounts.find(item => item.status === 'resolved')?.count || 0,
-      totalUsers
+      pending: 0,
+      inProgress: 0,
+      resolved: 0,
+      totalUsers: totalUsers || 0
     };
 
+    // Map status counts to expected frontend format
+    statusCounts.forEach(item => {
+      if (item.status === 'pending') {
+        stats.pending = Number(item.count);
+      } 
+      else if (item.status === 'in-progress' || item.status === 'inProgress') {
+        stats.inProgress = Number(item.count);
+      }
+      else if (item.status === 'resolved') {
+        stats.resolved = Number(item.count);
+      }
+    });
+
+    // Map the complaints to the expected frontend format
+    const formattedComplaints = recentComplaints.map(c => ({
+      id: c.id,
+      student: c.name,
+      type: c.department,
+      status: c.status === 'in-progress' ? 'In Progress' : 
+             c.status.charAt(0).toUpperCase() + c.status.slice(1),
+      priority: getPriorityFromTitle(c.title), // Function to determine priority
+      date: c.created_at,
+      description: c.details
+    }));
+
+    console.log('Sending formatted stats:', stats);
     res.status(200).json({
       success: true,
       stats,
-      recentComplaints
+      recentComplaints: formattedComplaints
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -368,6 +397,94 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
     });
   }
 }));
+
+// Fallback dashboard stats endpoint without RPC
+app.get('/api/admin/dashboard/stats-fallback', asyncHandler(async (req, res) => {
+  try {
+    console.log('🔍 Using fallback dashboard stats implementation');
+    
+    // Get all complaints
+    const { data: allComplaints, error: complaintsError } = await db
+      .from('complaints')
+      .select('*');
+    
+    if (complaintsError) {
+      console.error('Error fetching complaints:', complaintsError);
+      throw complaintsError;
+    }
+    
+    // Count by status
+    const pending = allComplaints.filter(c => c.status === 'pending').length;
+    const inProgress = allComplaints.filter(c => c.status === 'in-progress').length;
+    const resolved = allComplaints.filter(c => c.status === 'resolved').length;
+    
+    // Get users count
+    let totalUsers = 0;
+    try {
+      const { count, error: usersError } = await db
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+      
+      if (!usersError) {
+        totalUsers = count || 0;
+      }
+    } catch (userError) {
+      console.error('Error counting users:', userError);
+    }
+    
+    // Get 5 most recent complaints
+    const recentComplaints = allComplaints
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .slice(0, 5)
+      .map(c => ({
+        id: c.id,
+        student: c.name || 'Anonymous',
+        type: c.department || 'General',
+        status: c.status === 'in-progress' ? 'In Progress' : 
+               c.status.charAt(0).toUpperCase() + c.status.slice(1),
+        priority: getPriorityFromTitle(c.title),
+        date: c.created_at,
+        description: c.details
+      }));
+    
+    // Format the response
+    const stats = {
+      pending,
+      inProgress,
+      resolved,
+      totalUsers
+    };
+    
+    console.log('Dashboard stats (fallback):', { stats, recentComplaintsCount: recentComplaints.length });
+    
+    res.status(200).json({
+      success: true,
+      stats,
+      recentComplaints
+    });
+  } catch (error) {
+    console.error('Error in fallback dashboard stats:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch dashboard statistics',
+      message: error.message
+    });
+  }
+}));
+
+// Helper function to determine priority from title or other fields
+function getPriorityFromTitle(title) {
+  if (!title) return 'Medium';
+  
+  // Basic algorithm - you can enhance this
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('urgent') || lowerTitle.includes('critical') || lowerTitle.includes('emergency')) {
+    return 'High';
+  } else if (lowerTitle.includes('minor') || lowerTitle.includes('low')) {
+    return 'Low';
+  }
+  return 'Medium';
+}
 
 // ✅ Enhanced login with better error handling and database checks
 app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
