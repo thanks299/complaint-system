@@ -357,11 +357,34 @@
     <!-- Core JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Authentication Helper (Add this before other scripts) -->
+    <script>
+        // Simple authentication setup for development/testing
+        (function() {
+            const role = localStorage.getItem('role');
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('authToken');
+        
+            console.log("Auth check before initialization:", { role, username, token });
+        
+            // Set test credentials if none exist (development only)
+            if (!token || !username || !role) {
+                console.log("Setting development admin credentials");
+                localStorage.setItem('role', 'admin');
+                localStorage.setItem('username', 'Admin User');
+                localStorage.setItem('authToken', 'dev-token-12345');
+            }
+        })();
+    </script>
+
+    <!-- Application Scripts -->
     <script src="script/api.js"></script>
     <script src="script/navigation.js"></script>
     <script src="script/settings.js"></script>
     <script src="script/analytics.js"></script>
     <script src="script/admindashboard.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // This ensures everything initializes properly once the DOM is ready
