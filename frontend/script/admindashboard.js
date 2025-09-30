@@ -57,11 +57,26 @@ function checkAdminAuth() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('authToken');
     
+    console.log("Auth check:", { role, username, token });
+    
+    // For development - provide fallback admin access if needed
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (!token || !role || !username) {
+            // Set default admin credentials for development only
+            localStorage.setItem('role', 'admin');
+            localStorage.setItem('username', 'Admin User');
+            localStorage.setItem('authToken', 'dev-token-12345');
+            console.log('Development mode: Set default admin credentials');
+            return;
+        }
+    }
+    
     if (!token || !role || !username) {
         Swal.fire({
             icon: 'warning',
             title: 'Access Denied',
-            text: 'Please login to access the admin dashboard'
+            text: 'Please login to access the admin dashboard',
+            allowOutsideClick: false
         }).then(() => {
             window.location.href = 'index.html';
         });
@@ -72,7 +87,8 @@ function checkAdminAuth() {
         Swal.fire({
             icon: 'error',
             title: 'Unauthorized Access',
-            text: 'You do not have admin privileges to access this page'
+            text: 'You do not have admin privileges to access this page',
+            allowOutsideClick: false
         }).then(() => {
             window.location.href = 'index.html';
         });
