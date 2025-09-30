@@ -116,11 +116,22 @@ class AdminDashboard {
                 this.showError('Failed to load dashboard data' + 
                     (response?.message || 'unknown error'));
             }
-
         } catch (error) {
             console.error('Error refreshing dashboard:', error);
             this.showError('An error occurred while loading dashboard data');
-            this.showLoading(false);
+
+            // Even with error, try to update UI with empty data
+            this.stats = {
+            pending: 0,
+            inProgress: 0,
+            resolved: 0,
+            totalUsers: 0
+            };
+            this.recentComplaints = [];
+            this.updateStatsUI();
+            this.updateRecentComplaintsUI();
+        } finally {
+            this.showLoading(false);    
         }
     }
     
