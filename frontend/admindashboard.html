@@ -355,11 +355,22 @@
     </div>
 
     <!-- Core JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script/api.js"></script>
-    <script src="script/settings.js"></script>
     <script src="script/navigation.js"></script>
+    <script src="script/settings.js"></script>
+    <script src="script/analytics.js"></script>
     <script src="script/admindashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // This ensures everything initializes properly once the DOM is ready
+            if (window.navigationController) {
+                console.log('Admin Dashboard initialized successfully');
+            } else {
+            console.error('Navigation controller not initialized');
+            }
+        });
+    </script>
 </body>
 </html>
