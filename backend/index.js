@@ -303,6 +303,72 @@ app.get('/api/complaints', asyncHandler(async (req, res) => {
   }
 }));
 
+// Dashboard stats endpoint for admin
+app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
+  if (!db || typeof db.from !== 'function') {
+    return res.status(500).json({ 
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    console.log('Fetching dashboard stats...');
+    
+    // Get complaint counts by status
+    const { data: statusCounts, error: countsError } = await db
+      .rpc('get_complaint_status_counts');
+    
+    if (countsError) {
+      console.error('Error getting complaint counts:', countsError);
+      throw countsError;
+    }
+    
+    // Get recent complaints
+    const { data: recentComplaints, error: complaintsError } = await db
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (complaintsError) {
+      console.error('Error getting recent complaints:', complaintsError);
+      throw complaintsError;
+    }
+    
+    // Get user count
+    const { count: totalUsers, error: usersError } = await db
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+    
+    if (usersError) {
+      console.error('Error getting user count:', usersError);
+      throw usersError;
+    }
+
+    // Format the response
+    const stats = {
+      pending: statusCounts.find(item => item.status === 'pending')?.count || 0,
+      inProgress: statusCounts.find(item => item.status === 'in-progress')?.count || 0,
+      resolved: statusCounts.find(item => item.status === 'resolved')?.count || 0,
+      totalUsers
+    };
+
+    res.status(200).json({
+      success: true,
+      stats,
+      recentComplaints
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch dashboard statistics',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+}));
+
 // ✅ Enhanced login with better error handling and database checks
 app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
   console.log('Login request received:', { 
