@@ -41,32 +41,32 @@
             <nav class="sidebar-nav">
                 <ul class="nav-list">
                     <li class="nav-item active">
-                        <a href="#dashboard" class="nav-link" data-section="dashboard">
+                        <a href="/admindashboard.html" class="nav-link" data-section="dashboard">
                             <i class="fas fa-chart-line"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#complaints" class="nav-link" data-section="complaints">
+                        <a href="/views/complaints.html" class="nav-link" data-section="complaints">
                             <i class="fas fa-exclamation-triangle"></i>
                             <span>Complaints</span>
                             <span class="nav-badge">23</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#users" class="nav-link" data-section="users">
+                        <a href="/views/users.html" class="nav-link" data-section="users">
                             <i class="fas fa-users"></i>
                             <span>Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#analytics" class="nav-link" data-section="analytics">
+                        <a href="/views/analytics.html" class="nav-link" data-section="analytics">
                             <i class="fas fa-chart-bar"></i>
                             <span>Analytics</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#settings" class="nav-link" data-section="settings">
+                        <a href="/views/settings.html" class="nav-link" data-section="settings">
                             <i class="fas fa-cog"></i>
                             <span>Settings</span>
                         </a>
@@ -365,9 +365,9 @@
             const role = localStorage.getItem('role');
             const username = localStorage.getItem('username');
             const token = localStorage.getItem('authToken');
-        
+
             console.log("Auth check before initialization:", { role, username, token });
-        
+
             // Set test credentials if none exist (development only)
             if (!token || !username || !role) {
                 console.log("Setting development admin credentials");
@@ -389,6 +389,196 @@
         document.addEventListener('DOMContentLoaded', function() {
             // This ensures everything initializes properly once the DOM is ready
             console.log('Admin Dashboard initialized successfully');
+
+            // Sidebar Navigation Fix
+            // Get all navigation links in the sidebar
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            console.log('Setting up sidebar navigation handlers...');
+
+            // Add click handler to each link
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Get the section to navigate to
+                    const section = this.getAttribute('data-section');
+                    console.log('Sidebar link clicked:', section);
+
+                    // Update active state in sidebar
+                    document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    this.closest('.nav-item').classList.add('active');
+
+                    // Update breadcrumb
+                    updateBreadcrumb(section);
+
+                    // Handle navigation to the section
+                    if (window.adminDashboard && typeof window.adminDashboard.navigateToSection === 'function') {
+                        window.adminDashboard.navigateToSection(section);
+                    } else {
+                        handleBasicNavigation(section);
+                    }
+                });
+            });
+
+            // Update breadcrumb helper
+            function updateBreadcrumb(section) {
+                const breadcrumb = document.querySelector('.breadcrumb-item');
+                if (!breadcrumb) return;
+                let icon = 'fas fa-home';
+                if (section === 'complaints') icon = 'fas fa-exclamation-triangle';
+                else if (section === 'users') icon = 'fas fa-users';
+                else if (section === 'analytics') icon = 'fas fa-chart-bar';
+                else if (section === 'settings') icon = 'fas fa-cog';
+                breadcrumb.innerHTML = `<i class="${icon}"></i> ${section.charAt(0).toUpperCase() + section.slice(1)}`;
+            }
+
+            // Basic navigation as fallback
+            function handleBasicNavigation(section) {
+                // Check if section content exists, if not - create it
+                let sectionContent = document.getElementById(`${section}-section`);
+                if (!sectionContent) {
+                    sectionContent = document.createElement('div');
+                    sectionContent.id = `${section}-section`;
+                    sectionContent.className = 'content-section';
+                    sectionContent.innerHTML = getSectionContent(section);
+                    document.getElementById('content-container').appendChild(sectionContent);
+                }
+
+                // Hide all sections first
+                document.querySelectorAll('.content-section').forEach(sec => {
+                    sec.style.display = 'none';
+                });
+
+                // Show current section
+                if (section === 'dashboard') {
+                    document.querySelectorAll('.content-wrapper > *').forEach(el => {
+                        if (!el.classList.contains('content-section')) el.style.display = '';
+                    });
+                } else {
+                    document.querySelectorAll('.content-wrapper > *').forEach(el => {
+                        if (!el.classList.contains('content-section')) el.style.display = 'none';
+                    });
+                    sectionContent.style.display = 'block';
+                }
+
+                // Trigger appropriate initialization
+                if (section === 'analytics' && window.analyticsController) {
+                    window.analyticsController.initialize();
+                } else if (section === 'settings' && window.settingsController) {
+                    window.settingsController.loadSettings();
+                }
+            }
+
+            // Returns HTML for each section
+            function getSectionContent(section) {
+                if (section === 'complaints') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Complaints Management
+                            </h1>
+                            <p class="section-subtitle">View and manage all student complaints.</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>All Complaints</h3>
+                                <div class="card-actions">
+                                    <button class="btn-primary">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </button>
+                                    <button class="btn-secondary">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Loading complaints data...</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'users') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-users"></i>
+                                Users Management
+                            </h1>
+                            <p class="section-subtitle">Manage system users and permissions.</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>All Users</h3>
+                                <div class="card-actions">
+                                    <button class="btn-primary">
+                                        <i class="fas fa-plus"></i> Add User
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Loading users data...</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'analytics') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Analytics & Reports
+                            </h1>
+                            <p class="section-subtitle">View system metrics and generate reports.</p>
+                        </div>
+                        <div id="analytics-container">
+                            <div class="loading-indicator">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span>Loading analytics data...</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'settings') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-cog"></i>
+                                System Settings
+                            </h1>
+                            <p class="section-subtitle">Configure system preferences and options.</p>
+                        </div>
+                        <div id="settings-container">
+                            <div class="loading-indicator">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span>Loading settings...</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                return '';
+            }
+
+            // Handle logout action
+            const logoutBtn = document.querySelector('[data-action="logout"]');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (window.api && typeof window.api.logout === 'function') {
+                        window.api.logout(true);
+                    } else {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('username');
+                        localStorage.removeItem('role');
+                        window.location.href = 'index.html';
+                    }
+                });
+            }
         });
     </script>
 </body>
