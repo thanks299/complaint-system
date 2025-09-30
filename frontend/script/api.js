@@ -4,12 +4,22 @@
  */
 class APIService {
   constructor() {
+    // Base URL for your backend API
     this.baseURL = 'https://complaint-system-1os4.onrender.com/api';
+    
+    // For local development, optionally switch to localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Uncomment this line if you want to use a local API during development
+      // this.baseURL = 'http://localhost:3001/api'; 
+    }
+    
     this.headers = {
       'Content-Type': 'application/json',
     };
     // Track pending requests for potential cancellation
     this.pendingRequests = {};
+    
+    console.log('🌐 API Service initialized with base URL:', this.baseURL);
   }
 
   /**
@@ -24,41 +34,63 @@ class APIService {
 
   /**
    * Generic method to make API requests
+   * @param {string} method - HTTP method (GET, POST, etc.)
    * @param {string} endpoint - API endpoint
-   * @param {object} options - Request options
+   * @param {object} data - Request body for POST/PUT requests
    * @returns {Promise} - Promise that resolves to the API response
    */
-  async request(endpoint, options = {}) {
+  async request(method, endpoint, data = null) {
     const url = `${this.baseURL}${endpoint}`;
     
     // Add auth token to headers if available
     this.setAuthToken();
     
-    const requestId = `${options.method || 'GET'}-${endpoint}-${Date.now()}`;
+    const requestId = `${method}-${endpoint}-${Date.now()}`;
     
     // Create request configuration
-    const config = {
+    const options = {
+      method,
       headers: this.headers,
-      ...options,
     };
     
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      options.body = JSON.stringify(data);
+    }
+    
     try {
-      console.log(`🌐 API Request: ${options.method || 'GET'} ${endpoint}`);
+      console.log(`🌐 API Request: ${method} ${endpoint}`);
       
       // Track request for potential cancellation
       const controller = new AbortController();
-      config.signal = controller.signal;
+      options.signal = controller.signal;
       this.pendingRequests[requestId] = controller;
       
       // Make request
-      const response = await fetch(url, config);
-      const data = await response.json();
+      const response = await fetch(url, options);
       
       // Remove from pending requests
       delete this.pendingRequests[requestId];
+      
+      // For debugging - log the actual response
+      console.log(`🌐 API Response status for ${method} ${endpoint}:`, response.status);
+
+      // Parse the response
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+        try {
+          // Try to parse as JSON anyway
+          data = JSON.parse(data);
+        } catch (e) {
+          // Keep as text if not valid JSON
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP Error ${response.status}`);
+        throw new Error(data.message || data.error || `HTTP Error ${response.status}`);
       }
 
       return data;
@@ -69,6 +101,13 @@ class APIService {
       if (error.name === 'AbortError') {
         console.log(`Request cancelled: ${endpoint}`);
         return { cancelled: true };
+      }
+      
+      // If we're in development, provide fallback data for certain endpoints
+      if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
+          endpoint === '/admin/dashboard/stats') {
+        console.warn('Using fallback data for development');
+        return this.getFallbackDashboardData();
       }
       
       throw error;
@@ -106,10 +145,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to user data
    */
   async loginUser(data) {
-    return this.request('/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.request('POST', '/login', data);
   }
 
   /**
@@ -120,10 +156,7 @@ class APIService {
   async register(data) {
     const endpoint = '/registeration';
     
-    return this.request(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.request('POST', endpoint, data);
   }
 
   /**
@@ -155,18 +188,23 @@ class APIService {
       localStorage.removeItem('userId');
       localStorage.removeItem('authToken');
       
-      Swal.fire({
-        icon: 'success',
-        title: 'Logged Out',
-        text: 'You have been successfully logged out.',
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => {
+      // Assuming Swal is available globally
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Logged Out',
+          text: 'You have been successfully logged out.',
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = 'index.html';
+        });
+      } else {
         window.location.href = 'index.html';
-      });
+      }
     };
 
-    if (showConfirmation) {
+    if (showConfirmation && typeof Swal !== 'undefined') {
       Swal.fire({
         title: 'Logout',
         text: 'Are you sure you want to logout?',
@@ -197,7 +235,7 @@ class APIService {
     const queryParams = new URLSearchParams(filters).toString();
     const endpoint = queryParams ? `/complaints?${queryParams}` : '/complaints';
     
-    return this.request(endpoint);
+    return this.request('GET', endpoint);
   }
 
   /**
@@ -206,10 +244,16 @@ class APIService {
    * @returns {Promise} - Promise that resolves to created complaint
    */
   async createComplaint(data) {
-    return this.request('/complaints', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.request('POST', '/complaints', data);
+  }
+
+  /**
+   * Submit complaint (alias for backwards compatibility)
+   * @param {object} data - Complaint data
+   * @returns {Promise} - Promise that resolves to created complaint
+   */
+  async submitComplaint(data) {
+    return this.request('POST', '/complaintform', data);
   }
 
   /**
@@ -218,7 +262,16 @@ class APIService {
    * @returns {Promise} - Promise that resolves to complaint details
    */
   async getComplaintById(id) {
-    return this.request(`/complaints/${id}`);
+    return this.request('GET', `/complaints/${id}`);
+  }
+  
+  /**
+   * Get complaint details (alias for admin dashboard)
+   * @param {string} id - Complaint ID
+   * @returns {Promise} - Promise that resolves to complaint details
+   */
+  async getComplaintDetails(id) {
+    return this.request('GET', `/complaints/${id}`);
   }
 
   /**
@@ -228,10 +281,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to updated complaint
    */
   async updateComplaint(id, data) {
-    return this.request(`/complaints/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    return this.request('PUT', `/complaints/${id}`, data);
   }
 
   /**
@@ -240,9 +290,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to deletion status
    */
   async deleteComplaint(id) {
-    return this.request(`/complaints/${id}`, {
-      method: 'DELETE',
-    });
+    return this.request('DELETE', `/complaints/${id}`);
   }
 
   // ==============================
@@ -256,10 +304,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to updated complaint
    */
   async updateComplaintStatus(id, status) {
-    return this.request(`/admin/complaints/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
+    return this.request('PATCH', `/admin/complaints/${id}/status`, { status });
   }
 
   /**
@@ -271,7 +316,7 @@ class APIService {
     const queryParams = new URLSearchParams(filters).toString();
     const endpoint = queryParams ? `/admin/users?${queryParams}` : '/admin/users';
     
-    return this.request(endpoint);
+    return this.request('GET', endpoint);
   }
 
   /**
@@ -279,7 +324,16 @@ class APIService {
    * @returns {Promise} - Promise that resolves to dashboard stats
    */
   async getDashboardStats() {
-    return this.request('/admin/dashboard/stats');
+    try {
+      return await this.request('GET', '/admin/dashboard/stats');
+    } catch (error) {
+      // If we're in development, provide fallback data
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.warn('Using fallback dashboard data for development');
+        return this.getFallbackDashboardData();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -288,7 +342,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to recent complaints
    */
   async getRecentComplaints(limit = 5) {
-    return this.request(`/admin/dashboard/recent-complaints?limit=${limit}`);
+    return this.request('GET', `/admin/dashboard/recent-complaints?limit=${limit}`);
   }
 
   /**
@@ -296,7 +350,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to complaint type stats
    */
   async getComplaintTypeStats() {
-    return this.request('/admin/dashboard/complaint-types');
+    return this.request('GET', '/admin/dashboard/complaint-types');
   }
 
   /**
@@ -304,7 +358,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to complaint status stats
    */
   async getComplaintStatusStats() {
-    return this.request('/admin/dashboard/complaint-status');
+    return this.request('GET', '/admin/dashboard/complaint-status');
   }
 
   // ==============================
@@ -317,10 +371,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to created user
    */
   async createUser(data) {
-    return this.request('/admin/users', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.request('POST', '/admin/users', data);
   }
 
   /**
@@ -330,10 +381,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to updated user
    */
   async updateUser(id, data) {
-    return this.request(`/admin/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    return this.request('PUT', `/admin/users/${id}`, data);
   }
 
   /**
@@ -342,9 +390,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to deletion status
    */
   async deleteUser(id) {
-    return this.request(`/admin/users/${id}`, {
-      method: 'DELETE',
-    });
+    return this.request('DELETE', `/admin/users/${id}`);
   }
 
   /**
@@ -353,7 +399,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to user details
    */
   async getUserById(id) {
-    return this.request(`/admin/users/${id}`);
+    return this.request('GET', `/admin/users/${id}`);
   }
   
   // ==============================
@@ -369,23 +415,16 @@ class APIService {
     const queryParams = new URLSearchParams(params).toString();
     const endpoint = queryParams ? `/admin/analytics?${queryParams}` : '/admin/analytics';
     
-    return this.request(endpoint);
+    return this.request('GET', endpoint);
   }
   
   /**
    * Generate analytics report (admin)
-   * @param {string} format - Report format (pdf, csv)
-   * @param {object} filters - Report filters
+   * @param {object} config - Report configuration
    * @returns {Promise} - Promise that resolves to report URL
    */
-  async generateReport(format = 'pdf', filters = {}) {
-    return this.request('/admin/reports/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        format,
-        filters
-      }),
-    });
+  async generateReport(config) {
+    return this.request('POST', '/admin/reports/generate', config);
   }
 
   // ==============================
@@ -397,7 +436,7 @@ class APIService {
    * @returns {Promise} - Promise that resolves to system settings
    */
   async getSystemSettings() {
-    return this.request('/admin/settings');
+    return this.request('GET', '/admin/settings');
   }
   
   /**
@@ -406,75 +445,73 @@ class APIService {
    * @returns {Promise} - Promise that resolves to updated settings
    */
   async updateSystemSettings(settings) {
-    return this.request('/admin/settings', {
-      method: 'PUT',
-      body: JSON.stringify(settings),
-    });
+    return this.request('PUT', '/admin/settings', settings);
   }
 
-  /* ==============================
-   * Mock Data Methods (For Development)
-   * ==============================
-   * 
-   * NOTE: Mock data functionality has been commented out
-   * to ensure the system uses only real user-submitted data
-   
-  getMockDashboardData() {
+  /**
+   * Fallback data for development
+   * @returns {object} - Dashboard data for development
+   */
+  getFallbackDashboardData() {
+    console.log('📊 Providing fallback dashboard data for development');
+    
     return {
-      pendingCount: 23,
-      inProgressCount: 12,
-      resolvedCount: 121,
-      totalUsers: 89,
+      success: true,
+      stats: {
+        pending: 12,
+        inProgress: 8,
+        resolved: 24,
+        totalUsers: 45
+      },
       recentComplaints: [
         {
-          id: '1',
-          ticketId: 'NACOS-000001',
-          studentName: 'John Doe',
-          studentId: 'CS/2020/001',
+          id: 'C001',
+          student: 'John Doe',
           type: 'Academic',
-          status: 'pending',
-          priority: 'medium',
-          dateCreated: '2024-01-15T10:30:00Z',
-          subject: 'Unable to access course materials'
+          status: 'Pending',
+          priority: 'High',
+          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          description: 'Issue with course registration'
         },
         {
-          id: '2',
-          ticketId: 'NACOS-000002',
-          studentName: 'Jane Smith',
-          studentId: 'CS/2020/002',
+          id: 'C002',
+          student: 'Alice Smith',
           type: 'Technical',
-          status: 'in_progress',
-          priority: 'high',
-          dateCreated: '2024-01-14T14:20:00Z',
-          subject: 'Password reset not working'
+          status: 'In Progress',
+          priority: 'Medium',
+          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          description: 'Cannot access online resources'
         },
         {
-          id: '3',
-          ticketId: 'NACOS-000003',
-          studentName: 'Mike Johnson',
-          studentId: 'CS/2020/003',
+          id: 'C003',
+          student: 'Bob Johnson',
           type: 'Administrative',
-          status: 'resolved',
-          priority: 'low',
-          dateCreated: '2024-01-13T09:15:00Z',
-          subject: 'Transcript request delay'
+          status: 'Resolved',
+          priority: 'Low',
+          date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          description: 'ID card renewal issue'
+        },
+        {
+          id: 'C004',
+          student: 'Sarah Williams',
+          type: 'Facility',
+          status: 'Pending',
+          priority: 'Medium',
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          description: 'Classroom projector not working'
+        },
+        {
+          id: 'C005',
+          student: 'Mike Brown',
+          type: 'Academic',
+          status: 'Resolved',
+          priority: 'High',
+          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          description: 'Missing course materials'
         }
-      ],
-      complaintsByType: {
-        Academic: 45,
-        Technical: 32,
-        Administrative: 27,
-        Other: 8
-      },
-      complaintsByStatus: {
-        pending: 23,
-        in_progress: 12,
-        resolved: 54,
-        closed: 23
-      }
+      ]
     };
   }
-  */
 }
 
 // Initialize API service

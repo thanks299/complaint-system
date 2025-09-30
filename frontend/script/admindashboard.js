@@ -83,10 +83,17 @@ class AdminDashboard {
         try {
             console.log('Refreshing dashboard data...');
             this.showLoading(true);
+
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
             
             // Fetch dashboard data from API - no mock data
-            const response = await api.getDashboardStats();
-            
+            const response = await Promise.race([
+                api.getDashboardStats(), timeoutPromise
+            ]);
+
             if (response && response.success) {
                 // Update stats
                 this.stats = response.stats || {
@@ -105,11 +112,11 @@ class AdminDashboard {
                 
                 console.log('Dashboard data refreshed successfully');
             } else {
-                console.error('Failed to fetch dashboard data');
-                this.showError('Failed to load dashboard data');
+                console.error('Failed to fetch dashboard data', response);
+                this.showError('Failed to load dashboard data' + 
+                    (response?.message || 'unknown error'));
             }
-            
-            this.showLoading(false);
+
         } catch (error) {
             console.error('Error refreshing dashboard:', error);
             this.showError('An error occurred while loading dashboard data');
