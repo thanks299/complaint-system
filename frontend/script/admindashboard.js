@@ -640,7 +640,7 @@ class AdminDashboard {
     }
 }
 
-// Check if user is authenticated as admin
+// Update the checkAdminAuth function in admindashboard.js
 function checkAdminAuth() {
     const role = localStorage.getItem('role');
     const username = localStorage.getItem('username');
@@ -689,7 +689,7 @@ function checkAdminAuth() {
     return true;
 }
 
-// Update profile information in UI elements
+// Update this function to correctly set the username in all places
 function updateProfileInfo(username) {
     // Update sidebar profile
     const sidebarAdminName = document.querySelector('.sidebar .admin-name');
@@ -701,6 +701,12 @@ function updateProfileInfo(username) {
     const topNavProfileName = document.querySelector('.profile-name');
     if (topNavProfileName) {
         topNavProfileName.textContent = username;
+    }
+    
+    // Also update in authentication script for later access
+    const authElement = document.querySelector('.admin-name');
+    if (authElement) {
+        authElement.textContent = username;
     }
 }
 
