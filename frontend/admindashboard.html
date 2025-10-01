@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Dashboard - NACOS Complaint System</title>
     
     <!-- Favicon -->
@@ -41,32 +41,32 @@
             <nav class="sidebar-nav">
                 <ul class="nav-list">
                     <li class="nav-item active">
-                        <a href="/admindashboard.html" class="nav-link" data-section="dashboard">
+                        <a href="#admindashboard" class="nav-link" data-section="dashboard">
                             <i class="fas fa-chart-line"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/views/complaints.html" class="nav-link" data-section="complaints">
+                        <a href="#complaints" class="nav-link" data-section="complaints">
                             <i class="fas fa-exclamation-triangle"></i>
                             <span>Complaints</span>
                             <span class="nav-badge">23</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/views/users.html" class="nav-link" data-section="users">
+                        <a href="#users" class="nav-link" data-section="users">
                             <i class="fas fa-users"></i>
                             <span>Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/views/analytics.html" class="nav-link" data-section="analytics">
+                        <a href="#analytics" class="nav-link" data-section="analytics">
                             <i class="fas fa-chart-bar"></i>
                             <span>Analytics</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/views/settings.html" class="nav-link" data-section="settings">
+                        <a href="#settings" class="nav-link" data-section="settings">
                             <i class="fas fa-cog"></i>
                             <span>Settings</span>
                         </a>
@@ -86,6 +86,9 @@
                 </div>
             </div>
         </aside>
+        
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay"></div>
         
         <!-- Main Content Area -->
         <main class="main-content">
@@ -254,7 +257,7 @@
                             View All
                         </button>
                     </div>
-                    <div class="table-container">
+                    <div class="table-container table-responsive">
                         <table class="modern-table" id="dashboard-complaints-table">
                             <thead>
                                 <tr>
@@ -269,18 +272,18 @@
                             </thead>
                             <tbody id="dashboard-complaints-tbody">
                                 <tr>
-                                    <td><strong>NACOS-000001</strong></td>
-                                    <td>
+                                    <td data-label="Ticket ID"><strong>NACOS-000001</strong></td>
+                                    <td data-label="Student">
                                         <div class="user-info">
                                             <div class="user-name">John Doe</div>
                                             <div class="user-email">CS/2020/001</div>
                                         </div>
                                     </td>
-                                    <td><span class="type-badge">Academic</span></td>
-                                    <td><span class="status-badge pending">Pending</span></td>
-                                    <td><span class="priority-badge medium">Medium</span></td>
-                                    <td>Jan 15, 2024</td>
-                                    <td>
+                                    <td data-label="Type"><span class="type-badge">Academic</span></td>
+                                    <td data-label="Status"><span class="status-badge pending">Pending</span></td>
+                                    <td data-label="Priority"><span class="priority-badge medium">Medium</span></td>
+                                    <td data-label="Date">Jan 15, 2024</td>
+                                    <td data-label="Actions">
                                         <div class="table-actions">
                                             <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="1">
                                                 <i class="fas fa-eye"></i>
@@ -295,18 +298,18 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>NACOS-000002</strong></td>
-                                    <td>
+                                    <td data-label="Ticket ID"><strong>NACOS-000002</strong></td>
+                                    <td data-label="Student">
                                         <div class="user-info">
                                             <div class="user-name">Jane Smith</div>
                                             <div class="user-email">CS/2020/002</div>
                                         </div>
                                     </td>
-                                    <td><span class="type-badge">Technical</span></td>
-                                    <td><span class="status-badge in_progress">In Progress</span></td>
-                                    <td><span class="priority-badge high">High</span></td>
-                                    <td>Jan 14, 2024</td>
-                                    <td>
+                                    <td data-label="Type"><span class="type-badge">Technical</span></td>
+                                    <td data-label="Status"><span class="status-badge in_progress">In Progress</span></td>
+                                    <td data-label="Priority"><span class="priority-badge high">High</span></td>
+                                    <td data-label="Date">Jan 14, 2024</td>
+                                    <td data-label="Actions">
                                         <div class="table-actions">
                                             <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="2">
                                                 <i class="fas fa-eye"></i>
@@ -321,18 +324,18 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>NACOS-000003</strong></td>
-                                    <td>
+                                    <td data-label="Ticket ID"><strong>NACOS-000003</strong></td>
+                                    <td data-label="Student">
                                         <div class="user-info">
                                             <div class="user-name">Mike Johnson</div>
                                             <div class="user-email">CS/2020/003</div>
                                         </div>
                                     </td>
-                                    <td><span class="type-badge">Administrative</span></td>
-                                    <td><span class="status-badge resolved">Resolved</span></td>
-                                    <td><span class="priority-badge low">Low</span></td>
-                                    <td>Jan 13, 2024</td>
-                                    <td>
+                                    <td data-label="Type"><span class="type-badge">Administrative</span></td>
+                                    <td data-label="Status"><span class="status-badge resolved">Resolved</span></td>
+                                    <td data-label="Priority"><span class="priority-badge low">Low</span></td>
+                                    <td data-label="Date">Jan 13, 2024</td>
+                                    <td data-label="Actions">
                                         <div class="table-actions">
                                             <button class="action-icon view" title="View Details" data-action="view-complaint" data-id="3">
                                                 <i class="fas fa-eye"></i>
@@ -361,7 +364,7 @@
     <!-- Authentication Helper (Add this before other scripts) -->
     <script>
         // Simple authentication setup for development/testing
-        (function() {
+        (function () {
             const role = localStorage.getItem('role');
             const username = localStorage.getItem('username');
             const token = localStorage.getItem('authToken');
@@ -385,19 +388,17 @@
     <script src="script/analytics.js"></script>
     <script src="script/admindashboard.js"></script>
 
+    <!-- Sidebar Navigation Fix -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // This ensures everything initializes properly once the DOM is ready
-            console.log('Admin Dashboard initialized successfully');
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Setting up sidebar navigation handlers...');
 
-            // Sidebar Navigation Fix
             // Get all navigation links in the sidebar
             const navLinks = document.querySelectorAll('.sidebar .nav-link');
-            console.log('Setting up sidebar navigation handlers...');
 
             // Add click handler to each link
             navLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
+                link.addEventListener('click', function (e) {
                     e.preventDefault();
 
                     // Get the section to navigate to
@@ -411,167 +412,158 @@
                     this.closest('.nav-item').classList.add('active');
 
                     // Update breadcrumb
-                    updateBreadcrumb(section);
+                    const breadcrumb = document.querySelector('.breadcrumb-item');
+                    if (breadcrumb) {
+                        let icon = 'fas fa-home';
+                        if (section === 'complaints') icon = 'fas fa-exclamation-triangle';
+                        else if (section === 'users') icon = 'fas fa-users';
+                        else if (section === 'analytics') icon = 'fas fa-chart-bar';
+                        else if (section === 'settings') icon = 'fas fa-cog';
 
-                    // Handle navigation to the section
-                    if (window.adminDashboard && typeof window.adminDashboard.navigateToSection === 'function') {
-                        window.adminDashboard.navigateToSection(section);
-                    } else {
-                        handleBasicNavigation(section);
+                        breadcrumb.innerHTML = `<i class="${icon}"></i> ${section.charAt(0).toUpperCase() + section.slice(1)}`;
                     }
+
+                    // Load appropriate view based on section
+                    loadSectionView(section);
                 });
             });
 
-            // Update breadcrumb helper
-            function updateBreadcrumb(section) {
-                const breadcrumb = document.querySelector('.breadcrumb-item');
-                if (!breadcrumb) return;
-                let icon = 'fas fa-home';
-                if (section === 'complaints') icon = 'fas fa-exclamation-triangle';
-                else if (section === 'users') icon = 'fas fa-users';
-                else if (section === 'analytics') icon = 'fas fa-chart-bar';
-                else if (section === 'settings') icon = 'fas fa-cog';
-                breadcrumb.innerHTML = `<i class="${icon}"></i> ${section.charAt(0).toUpperCase() + section.slice(1)}`;
+            // Function to load view from file
+            async function loadSectionView(section) {
+                try {
+                    // Show loading indicator in content area
+                    const contentContainer = document.getElementById('content-container');
+                    contentContainer.innerHTML = `
+                        <div class="loading-indicator">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            <span>Loading ${section}...</span>
+                        </div>
+                    `;
+
+                    if (section === 'dashboard') {
+                        // For dashboard, just refresh the current view
+                        showDashboardContent();
+                        if (window.adminDashboard) {
+                            window.adminDashboard.refreshDashboard();
+                        }
+                        
+                        // Close sidebar on mobile
+                        if (window.innerWidth <= 768) {
+                            toggleSidebar();
+                        }
+                        return;
+                    }
+
+                    // Determine the file path based on section
+                    const filePath = `../views/${section}.html`;
+                    console.log(`Loading view from: ${filePath}`);
+
+                    // Fetch the HTML content
+                    const response = await fetch(filePath);
+                    if (!response.ok) {
+                        throw new Error(`Failed to load ${section} view: ${response.status} ${response.statusText}`);
+                    }
+
+                    // Get the HTML content and insert it
+                    const html = await response.text();
+
+                    // First, hide dashboard content
+                    document.querySelectorAll('.content-wrapper > *:not(.content-section)').forEach(el => {
+                        el.style.display = 'none';
+                    });
+
+                    // Remove any existing section with the same ID
+                    const existingSection = document.getElementById(`${section}-section`);
+                    if (existingSection) {
+                        existingSection.remove();
+                    }
+
+                    // Create new section element
+                    const sectionElement = document.createElement('div');
+                    sectionElement.id = `${section}-section`;
+                    sectionElement.className = 'content-section';
+                    
+                    // Add mobile-specific class if needed
+                    if (window.innerWidth <= 768) {
+                        sectionElement.classList.add('mobile-view');
+                    }
+                    
+                    sectionElement.innerHTML = html;
+                    sectionElement.style.display = 'block';
+
+                    // Add to DOM
+                    contentContainer.innerHTML = '';
+                    contentContainer.appendChild(sectionElement);
+
+                    // Initialize section if needed
+                    if (section === 'analytics' && window.analyticsController) {
+                        window.analyticsController.initialize();
+                    } else if (section === 'settings' && window.settingsController) {
+                        window.settingsController.loadSettings();
+                    } else if (section === 'complaints' && window.adminDashboard) {
+                        window.adminDashboard.loadAllComplaints();
+                    } else if (section === 'users' && window.adminDashboard) {
+                        window.adminDashboard.loadAllUsers();
+                    }
+                    
+                    // Convert tables to responsive mobile cards on small screens
+                    if (window.innerWidth <= 480) {
+                        const tables = sectionElement.querySelectorAll('.table-container');
+                        tables.forEach(table => {
+                            table.classList.add('mobile-cards');
+                        });
+                    }
+
+                    // Close sidebar on mobile
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+
+                    console.log(`Successfully loaded ${section} view`);
+                } catch (error) {
+                    console.error(`Error loading ${section} view:`, error);
+
+                    // Show error message
+                    const contentContainer = document.getElementById('content-container');
+                    contentContainer.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Failed to load ${section} view: ${error.message}</span>
+                            <button class="btn-primary" onclick="window.location.reload()">
+                                <i class="fas fa-sync-alt"></i> Reload Page
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Close sidebar on mobile
+                    if (window.innerWidth <= 768) {
+                        toggleSidebar();
+                    }
+                }
             }
 
-            // Basic navigation as fallback
-            function handleBasicNavigation(section) {
-                // Check if section content exists, if not - create it
-                let sectionContent = document.getElementById(`${section}-section`);
-                if (!sectionContent) {
-                    sectionContent = document.createElement('div');
-                    sectionContent.id = `${section}-section`;
-                    sectionContent.className = 'content-section';
-                    sectionContent.innerHTML = getSectionContent(section);
-                    document.getElementById('content-container').appendChild(sectionContent);
-                }
-
-                // Hide all sections first
-                document.querySelectorAll('.content-section').forEach(sec => {
-                    sec.style.display = 'none';
+            // Function to show dashboard content
+            function showDashboardContent() {
+                // Show main dashboard content
+                document.querySelectorAll('.content-wrapper > *:not(.content-section)').forEach(el => {
+                    el.style.display = '';
                 });
 
-                // Show current section
-                if (section === 'dashboard') {
-                    document.querySelectorAll('.content-wrapper > *').forEach(el => {
-                        if (!el.classList.contains('content-section')) el.style.display = '';
-                    });
-                } else {
-                    document.querySelectorAll('.content-wrapper > *').forEach(el => {
-                        if (!el.classList.contains('content-section')) el.style.display = 'none';
-                    });
-                    sectionContent.style.display = 'block';
-                }
-
-                // Trigger appropriate initialization
-                if (section === 'analytics' && window.analyticsController) {
-                    window.analyticsController.initialize();
-                } else if (section === 'settings' && window.settingsController) {
-                    window.settingsController.loadSettings();
-                }
+                // Hide any section content
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.style.display = 'none';
+                });
             }
 
-            // Returns HTML for each section
-            function getSectionContent(section) {
-                if (section === 'complaints') {
-                    return `
-                        <div class="section-header">
-                            <h1 class="section-title">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Complaints Management
-                            </h1>
-                            <p class="section-subtitle">View and manage all student complaints.</p>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>All Complaints</h3>
-                                <div class="card-actions">
-                                    <button class="btn-primary">
-                                        <i class="fas fa-filter"></i> Filter
-                                    </button>
-                                    <button class="btn-secondary">
-                                        <i class="fas fa-download"></i> Export
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="loading-indicator">
-                                    <i class="fas fa-circle-notch fa-spin"></i>
-                                    <span>Loading complaints data...</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else if (section === 'users') {
-                    return `
-                        <div class="section-header">
-                            <h1 class="section-title">
-                                <i class="fas fa-users"></i>
-                                Users Management
-                            </h1>
-                            <p class="section-subtitle">Manage system users and permissions.</p>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>All Users</h3>
-                                <div class="card-actions">
-                                    <button class="btn-primary">
-                                        <i class="fas fa-plus"></i> Add User
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="loading-indicator">
-                                    <i class="fas fa-circle-notch fa-spin"></i>
-                                    <span>Loading users data...</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else if (section === 'analytics') {
-                    return `
-                        <div class="section-header">
-                            <h1 class="section-title">
-                                <i class="fas fa-chart-bar"></i>
-                                Analytics & Reports
-                            </h1>
-                            <p class="section-subtitle">View system metrics and generate reports.</p>
-                        </div>
-                        <div id="analytics-container">
-                            <div class="loading-indicator">
-                                <i class="fas fa-circle-notch fa-spin"></i>
-                                <span>Loading analytics data...</span>
-                            </div>
-                        </div>
-                    `;
-                } else if (section === 'settings') {
-                    return `
-                        <div class="section-header">
-                            <h1 class="section-title">
-                                <i class="fas fa-cog"></i>
-                                System Settings
-                            </h1>
-                            <p class="section-subtitle">Configure system preferences and options.</p>
-                        </div>
-                        <div id="settings-container">
-                            <div class="loading-indicator">
-                                <i class="fas fa-circle-notch fa-spin"></i>
-                                <span>Loading settings...</span>
-                            </div>
-                        </div>
-                    `;
-                }
-                return '';
-            }
-
-            // Handle logout action
-            const logoutBtn = document.querySelector('[data-action="logout"]');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
+            // Also handle logout action
+            const logoutButton = document.querySelector('[data-action="logout"]');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function (e) {
                     e.preventDefault();
                     if (window.api && typeof window.api.logout === 'function') {
                         window.api.logout(true);
                     } else {
+                        // Fallback logout
                         localStorage.removeItem('authToken');
                         localStorage.removeItem('username');
                         localStorage.removeItem('role');
@@ -579,6 +571,80 @@
                     }
                 });
             }
+            
+            // Mobile menu functionality
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.querySelector('.sidebar-overlay');
+            
+            // Function to toggle sidebar
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                
+                // Toggle overlay
+                if (sidebarOverlay) {
+                    sidebarOverlay.classList.toggle('active');
+                }
+                
+                // Toggle body scroll
+                if (sidebar.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling
+                } else {
+                    document.body.style.overflow = ''; // Enable scrolling
+                }
+            }
+            
+            // Make toggleSidebar available globally
+            window.toggleSidebar = toggleSidebar;
+            
+            // Mobile menu button click
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleSidebar();
+                });
+            }
+            
+            // Close sidebar when clicking overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    toggleSidebar();
+                });
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('active');
+                    }
+                    document.body.style.overflow = '';
+                }
+                
+                // Update table display
+                document.querySelectorAll('.content-section').forEach(section => {
+                    if (section.style.display === 'block') {
+                        const tables = section.querySelectorAll('.table-container');
+                        tables.forEach(table => {
+                            if (window.innerWidth <= 480) {
+                                table.classList.add('mobile-cards');
+                            } else {
+                                table.classList.remove('mobile-cards');
+                            }
+                        });
+                    }
+                });
+                
+                // Add/remove mobile-view class
+                document.querySelectorAll('.content-section').forEach(section => {
+                    if (window.innerWidth <= 768) {
+                        section.classList.add('mobile-view');
+                    } else {
+                        section.classList.remove('mobile-view');
+                    }
+                });
+            });
         });
     </script>
 </body>
