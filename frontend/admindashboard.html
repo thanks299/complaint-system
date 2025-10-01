@@ -581,7 +581,7 @@
             function toggleSidebar() {
                 const sidebar = document.querySelector('.sidebar');
                 const sidebarOverlay = document.querySelector('.sidebar-overlay');
-                
+
                 sidebar.classList.toggle('active');
                 
                 // Toggle overlay
@@ -648,6 +648,28 @@
                     }
                 });
             });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Update username from localStorage after all other scripts have loaded
+            setTimeout(() => {
+                const username = localStorage.getItem('username');
+
+                if (username) {
+                    // Update all username elements
+                    document.querySelectorAll('.admin-name').forEach(el => {
+                        el.textContent = username;
+                    });
+
+                    document.querySelectorAll('.profile-name').forEach(el => {
+                        el.textContent = username;
+                    });
+
+                    console.log('Username updated to:', username);
+                }
+            }, 500);
         });
     </script>
 </body>
