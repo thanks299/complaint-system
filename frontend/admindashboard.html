@@ -441,12 +441,12 @@
                     `;
 
                     if (section === 'dashboard') {
-                        // For dashboard, just refresh the current view
+                    // For dashboard, just refresh the current view
                         showDashboardContent();
                         if (window.adminDashboard) {
                             window.adminDashboard.refreshDashboard();
                         }
-                        
+            
                         // Close sidebar on mobile
                         if (window.innerWidth <= 768) {
                             toggleSidebar();
@@ -454,18 +454,39 @@
                         return;
                     }
 
-                    // Determine the file path based on section
-                    const filePath = `./views/${section}.html`;
-                    console.log(`Loading view from: ${filePath}`);
+                    let html = null;
+                    let fetchError = null;
 
-                    // Fetch the HTML content
-                    const response = await fetch(filePath);
-                    if (!response.ok) {
-                        throw new Error(`Failed to load ${section} view: ${response.status} ${response.statusText}`);
+                    // Try multiple possible paths for the view files
+                    const possiblePaths = [
+                        `./views/${section}.html`,
+                        `../views/${section}.html`,
+                        `./frontend/views/${section}.html`,
+                        `./${section}.html`
+                    ];
+
+                    for (const path of possiblePaths) {
+                        try {
+                            console.log(`Trying to load view from: ${path}`);
+                            const response = await fetch(path);
+                            if (response.ok) {
+                                html = await response.text();
+                                console.log(`Successfully loaded view from: ${path}`);
+                                break;
+                            } else {
+                                console.log(`Path ${path} returned ${response.status}`);
+                            }
+                        } catch (e) {
+                            console.log(`Error loading from ${path}: ${e.message}`);
+                            fetchError = e;
+                        }
                     }
 
-                    // Get the HTML content and insert it
-                    const html = await response.text();
+                    // If we couldn't load the file from any path, use fallback template
+                    if (!html) {
+                        console.log(`No view file found for ${section}, using fallback template`);
+                        html = getFallbackTemplate(section);
+                    }
 
                     // First, hide dashboard content
                     document.querySelectorAll('.content-wrapper > *:not(.content-section)').forEach(el => {
@@ -482,12 +503,12 @@
                     const sectionElement = document.createElement('div');
                     sectionElement.id = `${section}-section`;
                     sectionElement.className = 'content-section';
-                    
+        
                     // Add mobile-specific class if needed
                     if (window.innerWidth <= 768) {
                         sectionElement.classList.add('mobile-view');
                     }
-                    
+        
                     sectionElement.innerHTML = html;
                     sectionElement.style.display = 'block';
 
@@ -505,7 +526,7 @@
                     } else if (section === 'users' && window.adminDashboard) {
                         window.adminDashboard.loadAllUsers();
                     }
-                    
+        
                     // Convert tables to responsive mobile cards on small screens
                     if (window.innerWidth <= 480) {
                         const tables = sectionElement.querySelectorAll('.table-container');
@@ -529,16 +550,135 @@
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
                             <span>Failed to load ${section} view: ${error.message}</span>
-                            <button class="btn-primary" onclick="window.location.reload()">
-                                <i class="fas fa-sync-alt"></i> Reload Page
-                            </button>
+                            <div class="error-actions">
+                                <button class="btn-primary" onclick="loadSectionView('${section}')">
+                                    <i class="fas fa-sync-alt"></i> Try Again
+                                </button>
+                                <button class="btn-secondary" onclick="window.location.reload()">
+                                    <i class="fas fa-redo"></i> Reload Page
+                                </button>
+                            </div>
                         </div>
                     `;
-                    
+        
                     // Close sidebar on mobile
                     if (window.innerWidth <= 768) {
                         toggleSidebar();
                     }
+                }
+            }
+
+            // Add this fallback template function right after loadSectionView
+            function getFallbackTemplate(section) {
+                if (section === 'complaints') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Complaints Management
+                            </h1>
+                            <p class="section-subtitle">View and manage all student complaints in the system.</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>All Complaints</h3>
+                                <div class="card-actions">
+                                    <button class="btn-primary">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </button>
+                                    <button class="btn-secondary">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Loading complaints data...</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'users') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-users"></i>
+                                Users Management
+                            </h1>
+                            <p class="section-subtitle">Manage system users and their permissions.</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>All Users</h3>
+                                <div class="card-actions">
+                                    <button class="btn-primary">
+                                        <i class="fas fa-plus"></i> Add User
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Loading users data...</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'analytics') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Analytics & Reports
+                            </h1>
+                            <p class="section-subtitle">View system metrics and generate reports.</p>
+                        </div>
+                        
+                        <div id="analytics-container">
+                            <div class="loading-indicator">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span>Loading analytics data...</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (section === 'settings') {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-cog"></i>
+                                System Settings
+                            </h1>
+                            <p class="section-subtitle">Configure system preferences and options.</p>
+                        </div>
+                        
+                        <div class="settings-container">
+                            <div class="loading-indicator">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span>Loading settings data...</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="section-header">
+                            <h1 class="section-title">
+                                <i class="fas fa-file-alt"></i>
+                                ${section.charAt(0).toUpperCase() + section.slice(1)}
+                            </h1>
+                            <p class="section-subtitle">This section is currently under construction.</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-tools" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
+                                <h2>Coming Soon</h2>
+                                <p>This feature is currently being developed.</p>
+                            </div>
+                        </div>
+                    `;
                 }
             }
 
