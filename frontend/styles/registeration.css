@@ -148,7 +148,7 @@ body {
   pointer-events: none;
 }
 
-/* Enhanced Form Container */
+/* Enhanced Form Container - Reduced size by 10% */
 .container {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px) saturate(180%);
@@ -156,13 +156,13 @@ body {
     0 32px 64px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  padding: 50px;
-  width: 100%;
-  max-width: 650px;
-  min-width: 350px;
+  padding: 45px; /* Reduced from 50px */
+  width: 90%; /* Reduced from 100% */
+  max-width: 585px; /* Reduced from 650px by 10% */
+  min-width: 315px; /* Reduced from 350px by 10% */
   border-radius: 25px;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  margin: 25px 0;
+  margin: 25px auto;
   animation: slideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
   overflow: hidden;
@@ -334,10 +334,10 @@ label::after {
 /* Enhanced Input Field Styling - FIXED VISIBILITY */
 input, select {
   width: 100%;
-  border-radius: 16px;
-  border: 2.5px solid #e2e8f0;
+  border-radius: 14px;
+  border: 2px solid #e2e8f0;
   padding: 18px 22px;
-  font-size: 16px;
+  font-size: 15px;
   font-family: inherit;
   font-weight: 500;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -541,12 +541,12 @@ input.error, select.error {
 
 .btn {
   width: 100%;
-  height: 56px;
+  height: 52px;
   background: linear-gradient(135deg, #4a7c59 0%, #2d5016 50%, #1a3d0f 100%);
   color: white;
   border-radius: 16px;
   border: none;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -789,8 +789,8 @@ input.error, select.error {
 /* Large Desktop (1200px and up) */
 @media (min-width: 1200px) {
   .container {
-    max-width: 700px;
-    padding: 60px;
+    max-width: 630px;
+    padding: 54px;
   }
   
   .image-overlay h2 {
@@ -810,12 +810,12 @@ input.error, select.error {
   }
   
   input, select {
-    padding: 20px 24px;
+    padding: 18px 22px;
     font-size: 17px;
   }
   
   .btn {
-    height: 60px;
+    height: 54px;
     font-size: 18px;
   }
 }
@@ -823,8 +823,8 @@ input.error, select.error {
 /* Desktop (992px to 1199px) */
 @media (min-width: 992px) and (max-width: 1199px) {
   .container {
-    max-width: 620px;
-    padding: 50px;
+    max-width: 560px;
+    padding: 45px;
   }
   
   .image-overlay h2 {
@@ -850,7 +850,7 @@ input.error, select.error {
   
   .image-container {
     max-width: 100%;
-    min-height: 280px;
+    min-height: 252px;
     transform: none;
     border-radius: 20px;
   }
@@ -871,15 +871,15 @@ input.error, select.error {
   
   .container {
     max-width: 100%;
-    padding: 40px 35px;
+    padding: 36px 32px;
   }
   
   .form-row {
-    gap: 20px;
+    gap: 18px;
   }
   
   input, select {
-    padding: 16px 20px;
+    padding: 14px 18px;
   }
 }
 
@@ -890,12 +890,12 @@ input.error, select.error {
   }
   
   .image-section {
-    min-height: 280px;
+    min-height: 252px;
     padding: 15px;
   }
   
   .image-container {
-    min-height: 220px;
+    min-height: 198px;
     border-radius: 18px;
   }
   
@@ -919,7 +919,7 @@ input.error, select.error {
   
   .container {
     max-width: 100%;
-    padding: 35px 25px;
+    padding: 32px 23px;
     border-radius: 18px;
   }
   
@@ -942,12 +942,12 @@ input.error, select.error {
   }
   
   input, select {
-    padding: 14px 18px;
+    padding: 13px 16px;
     font-size: 16px;
   }
   
   .btn {
-    height: 52px;
+    height: 47px;
     font-size: 16px;
   }
 }
@@ -959,12 +959,12 @@ input.error, select.error {
   }
   
   .image-section {
-    min-height: 240px;
+    min-height: 216px;
     padding: 12px;
   }
   
   .image-container {
-    min-height: 200px;
+    min-height: 180px;
     border-radius: 15px;
   }
   
@@ -987,7 +987,7 @@ input.error, select.error {
   }
   
   .container {
-    padding: 25px 20px;
+    padding: 23px 18px;
     border-radius: 15px;
     margin: 15px 0;
   }
@@ -1002,7 +1002,7 @@ input.error, select.error {
   }
   
   header h2 {
-    font-size: 20px;
+    font-size: 19spx;
   }
   
   header p {
@@ -1025,7 +1025,7 @@ input.error, select.error {
   }
   
   input, select {
-    padding: 12px 16px;
+    padding: 11px 14px;
     font-size: 15px;
     border-radius: 12px;
   }
@@ -1036,7 +1036,7 @@ input.error, select.error {
   }
   
   .btn {
-    height: 48px;
+    height: 43px;
     font-size: 15px;
     margin-top: 15px;
     border-radius: 12px;
@@ -1107,6 +1107,14 @@ input.error, select.error {
   .btn {
     background: #333 !important;
   }
+}
+
+
+/* Make form auto-center */
+.form-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* High DPI Displays */
@@ -1198,5 +1206,107 @@ select:focus-visible {
   
   label {
     font-weight: 900;
+  }
+}
+
+/* Better vertical spacing on small screens */
+@media (max-height: 700px) {
+  .container {
+    margin: 15px auto;
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  header {
+    margin-bottom: 25px;
+  }
+}
+
+/* Fix for extremely small screens */
+@media (max-width: 340px) {
+  .container {
+    min-width: 280px;
+    padding: 18px 15px;
+  }
+  
+  header h2 {
+    font-size: 17px;
+  }
+  
+  header p {
+    font-size: 12px;
+  }
+  
+  input, select {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  label {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  
+  .btn {
+    height: 40px;
+    font-size: 13px;
+  }
+}
+
+/* Fix for landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .main-wrapper {
+    flex-direction: column;
+  }
+  
+  .image-section {
+    min-height: 160px;
+  }
+  
+  .image-container {
+    min-height: 130px;
+  }
+  
+  .form-section {
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 20px;
+    margin: 10px auto;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .btn-container {
+    margin-top: 15px;
+  }
+}
+
+/* Improved image overlay text size for smaller screens */
+@media (max-width: 767px) {
+  .image-overlay h2 {
+    font-size: calc(1.3rem + 1vw);
+  }
+  
+  .image-overlay p {
+    font-size: calc(0.8rem + 0.5vw);
+  }
+}
+
+/* Improve input sizing on larger phones */
+@media (min-width: 400px) and (max-width: 575px) {
+  input, select {
+    padding: 12px 16px;
+  }
+  
+  .container {
+    padding: 25px 20px;
   }
 }

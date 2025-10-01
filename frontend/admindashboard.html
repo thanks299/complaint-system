@@ -812,5 +812,533 @@
             }, 500);
         });
     </script>
+
+    <!-- Analytics Controller -->
+<script>
+  // Analytics Controller
+  class AnalyticsController {
+    constructor() {
+      this.charts = {};
+      console.log('Analytics Controller initialized');
+    }
+
+    // Initialize analytics dashboard
+    initialize() {
+      console.log('Initializing analytics dashboard...');
+      
+      // Set up analytics layout
+      this.setupLayout();
+      
+      // Load analytics data
+      this.loadAnalyticsData();
+    }
+
+    // Set up the analytics layout
+    setupLayout() {
+      const container = document.getElementById('analytics-container');
+      if (!container) return;
+      
+      container.innerHTML = `
+        <div class="analytics-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Complaint Volume Over Time</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="complaints-timeline-chart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3>Complaints by Category</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="complaints-category-chart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3>Resolution Rate</h3>
+            </div>
+            <div class="card-body">
+              <canvas id="resolution-rate-chart"></canvas>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h3>Average Response Time</h3>
+            </div>
+            <div class="card-body">
+              <div class="stat-highlight">
+                <span class="stat-value">32</span>
+                <span class="stat-unit">hours</span>
+              </div>
+              <p class="stat-description">Average time to first response</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3>Generate Custom Reports</h3>
+          </div>
+          <div class="card-body">
+            <form id="report-form" class="report-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="report-type">Report Type</label>
+                  <select id="report-type" class="form-control">
+                    <option value="complaints">Complaints Summary</option>
+                    <option value="users">User Activity</option>
+                    <option value="response-time">Response Time Analysis</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="report-period">Time Period</label>
+                  <select id="report-period" class="form-control">
+                    <option value="7days">Last 7 Days</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="90days">Last 90 Days</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="report-format">Format</label>
+                  <select id="report-format" class="form-control">
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                    <option value="csv">CSV</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div id="custom-date-range" class="form-row" style="display:none;">
+                <div class="form-group">
+                  <label for="start-date">Start Date</label>
+                  <input type="date" id="start-date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                  <label for="end-date">End Date</label>
+                  <input type="date" id="end-date" class="form-control">
+                </div>
+              </div>
+              
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-file-export"></i> Generate Report
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+      
+      // Setup custom date range toggle
+      const periodSelect = document.getElementById('report-period');
+      const customDateRange = document.getElementById('custom-date-range');
+      
+      if (periodSelect && customDateRange) {
+        periodSelect.addEventListener('change', () => {
+          if (periodSelect.value === 'custom') {
+            customDateRange.style.display = 'flex';
+          } else {
+            customDateRange.style.display = 'none';
+          }
+        });
+      }
+      
+      // Setup report form submission
+      const reportForm = document.getElementById('report-form');
+      if (reportForm) {
+        reportForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.generateReport();
+        });
+      }
+    }
+
+    // Load analytics data from API
+    async loadAnalyticsData() {
+      try {
+        // Show loading indicators for charts
+        this.showChartLoading('complaints-timeline-chart');
+        this.showChartLoading('complaints-category-chart');
+        this.showChartLoading('resolution-rate-chart');
+        
+        // Try to fetch analytics data from API
+        let analyticsData;
+        try {
+          if (window.api && typeof window.api.getAnalyticsData === 'function') {
+            const response = await window.api.getAnalyticsData();
+            if (response.success) {
+              analyticsData = response.data;
+            } else {
+              throw new Error('Failed to load analytics data');
+            }
+          } else {
+            throw new Error('API not available');
+          }
+        } catch (error) {
+          console.warn('Using fallback analytics data:', error);
+          analyticsData = this.getFallbackData();
+        }
+        
+        // Create charts with the data
+        this.createTimelineChart(analyticsData.monthlyStats);
+        this.createCategoryChart(analyticsData.complaintTypes);
+        this.createResolutionChart();
+        
+      } catch (error) {
+        console.error('Error loading analytics data:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Analytics Error',
+          text: 'Failed to load analytics data. Please try again later.'
+        });
+      }
+    }
+
+    // Create timeline chart
+    createTimelineChart(monthlyData) {
+      const ctx = document.getElementById('complaints-timeline-chart');
+      if (!ctx) return;
+      
+      // Extract data from API response
+      const labels = monthlyData.map(item => item.month);
+      const pendingData = monthlyData.map(item => item.pending);
+      const inProgressData = monthlyData.map(item => item.inProgress);
+      const resolvedData = monthlyData.map(item => item.resolved);
+      
+      // Create chart
+      this.charts.timeline = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Pending',
+              data: pendingData,
+              borderColor: '#ff9800',
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'In Progress',
+              data: inProgressData,
+              borderColor: '#2196f3',
+              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Resolved',
+              data: resolvedData,
+              borderColor: '#4caf50',
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Complaints'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Month'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Create category chart
+    createCategoryChart(categoryData) {
+      const ctx = document.getElementById('complaints-category-chart');
+      if (!ctx) return;
+      
+      // Extract data
+      const labels = Object.keys(categoryData);
+      const data = Object.values(categoryData);
+      
+      // Create chart
+      this.charts.category = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#4CAF50', // Academic
+              '#2196F3', // Technical
+              '#FFC107', // Administrative
+              '#9C27B0', // Facility
+              '#FF5722'  // Other
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            }
+          }
+        }
+      });
+    }
+
+    // Create resolution rate chart
+    createResolutionChart() {
+      const ctx = document.getElementById('resolution-rate-chart');
+      if (!ctx) return;
+      
+      this.charts.resolution = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['< 24h', '24-48h', '48-72h', '> 72h'],
+          datasets: [{
+            label: 'Resolution Time',
+            data: [42, 23, 15, 8],
+            backgroundColor: [
+              'rgba(76, 175, 80, 0.7)',   // Green for fast
+              'rgba(255, 193, 7, 0.7)',   // Yellow for medium
+              'rgba(255, 152, 0, 0.7)',   // Orange for slow
+              'rgba(244, 67, 54, 0.7)'    // Red for very slow
+            ],
+            borderColor: [
+              'rgba(76, 175, 80, 1)',
+              'rgba(255, 193, 7, 1)',
+              'rgba(255, 152, 0, 1)',
+              'rgba(244, 67, 54, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Complaints'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Resolution Time'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Show loading indicator while chart data loads
+    showChartLoading(chartId) {
+      const chartCanvas = document.getElementById(chartId);
+      if (!chartCanvas) return;
+      
+      const container = chartCanvas.parentNode;
+      if (container) {
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'chart-loading';
+        loadingEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+        
+        // Position the loading indicator over the chart area
+        loadingEl.style.position = 'absolute';
+        loadingEl.style.top = '0';
+        loadingEl.style.left = '0';
+        loadingEl.style.width = '100%';
+        loadingEl.style.height = '100%';
+        loadingEl.style.display = 'flex';
+        loadingEl.style.alignItems = 'center';
+        loadingEl.style.justifyContent = 'center';
+        loadingEl.style.backgroundColor = 'rgba(255,255,255,0.8)';
+        loadingEl.style.color = '#6c757d';
+        loadingEl.style.fontSize = '2rem';
+        loadingEl.style.zIndex = '1';
+        
+        // Set container to relative if it's not already
+        if (window.getComputedStyle(container).position === 'static') {
+          container.style.position = 'relative';
+        }
+        
+        container.appendChild(loadingEl);
+        
+        // Remove loading after timeout to prevent hanging
+        setTimeout(() => {
+          const loadingElement = container.querySelector('.chart-loading');
+          if (loadingElement) {
+            loadingElement.remove();
+          }
+        }, 5000);
+      }
+    }
+
+    // Generate report
+    generateReport() {
+      const reportType = document.getElementById('report-type').value;
+      const reportPeriod = document.getElementById('report-period').value;
+      const reportFormat = document.getElementById('report-format').value;
+      
+      let startDate, endDate;
+      if (reportPeriod === 'custom') {
+        startDate = document.getElementById('start-date').value;
+        endDate = document.getElementById('end-date').value;
+        
+        if (!startDate || !endDate) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Missing Dates',
+            text: 'Please select both start and end dates for custom range'
+          });
+          return;
+        }
+      }
+      
+      const reportConfig = {
+        type: reportType,
+        period: reportPeriod,
+        format: reportFormat,
+        startDate,
+        endDate
+      };
+      
+      Swal.fire({
+        title: 'Generating Report',
+        text: 'Please wait while we generate your report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+          
+          // Call API to generate report
+          if (window.api && typeof window.api.generateReport === 'function') {
+            window.api.generateReport(reportConfig)
+              .then(response => {
+                Swal.close();
+                
+                if (response.success) {
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Report Generated',
+                    text: `Your ${reportType} report has been generated successfully!`,
+                    confirmButtonText: 'Download',
+                    showCancelButton: true,
+                    cancelButtonText: 'Close'
+                  }).then(result => {
+                    if (result.isConfirmed && response.downloadUrl) {
+                      window.open(response.downloadUrl, '_blank');
+                    }
+                  });
+                } else {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Report Generation Failed',
+                    text: response.message || 'Could not generate report'
+                  });
+                }
+              })
+              .catch(error => {
+                console.error('Error generating report:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Report Generation Failed',
+                  text: 'An error occurred while generating the report'
+                });
+              });
+          } else {
+            // Fallback for development
+            setTimeout(() => {
+              Swal.close();
+              Swal.fire({
+                icon: 'success',
+                title: 'Report Generated (Development Mode)',
+                text: `Your ${reportType} report would be generated here in production`,
+                confirmButtonText: 'OK'
+              });
+            }, 1500);
+          }
+        }
+      });
+    }
+
+    // Fallback data when API is unavailable
+    getFallbackData() {
+      // Generate some reasonable sample data
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const now = new Date();
+      const monthData = [];
+      
+      // Generate 12 months of data
+      for (let i = 0; i < 12; i++) {
+        const month = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+        const monthName = monthNames[month.getMonth()];
+        
+        // Generate some random but somewhat realistic numbers
+        // Make them increase slightly over time for a realistic trend
+        const basePending = 5 + Math.floor(i / 2);
+        const baseInProgress = 3 + Math.floor(i / 3);
+        const baseResolved = 8 + Math.floor(i * 1.5);
+        
+        monthData.push({
+          month: monthName,
+          pending: basePending + Math.floor(Math.random() * 5),
+          inProgress: baseInProgress + Math.floor(Math.random() * 4),
+          resolved: baseResolved + Math.floor(Math.random() * 8)
+        });
+      }
+      
+      return {
+        monthlyStats: monthData,
+        complaintTypes: {
+          'Academic': 15,
+          'Technical': 8,
+          'Administrative': 12,
+          'Facility': 5,
+          'Other': 3
+        },
+        responseTime: {
+          average: 32, // hours
+          min: 2,
+          max: 96
+        }
+      };
+    }
+  }
+  
+  // Initialize the controller and make it available globally
+  window.analyticsController = new AnalyticsController();
+  console.log('Analytics Controller registered globally');
+</script>
 </body>
 </html>
