@@ -579,6 +579,8 @@
             
             // Function to toggle sidebar
             function toggleSidebar() {
+                const sidebar = document.querySelector('.sidebar');
+                const sidebarOverlay = document.querySelector('.sidebar-overlay');
                 sidebar.classList.toggle('active');
                 
                 // Toggle overlay
