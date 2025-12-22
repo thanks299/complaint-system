@@ -680,7 +680,7 @@ async function userRegistration() {
         <p>${errorMessage}</p>
         <div class="error-actions" style="margin-top: 15px;">
           <button class="retry-btn" onclick="userRegistration()" style="margin-right: 10px; padding: 8px 16px; background: #4a7c59; color: white; border: none; border-radius: 5px; cursor: pointer;">Try Again</button>
-          <button class="contact-btn" onclick="window.open('mailto:support@nacos.edu.ng', '_blank')" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Contact Support</button>
+          <button class="contact-btn" onclick="window.open('mailto:thanksagbeble@gmail.com', '_blank')" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Contact Support</button>
         </div>
       `,
       showConfirmButton: false
@@ -776,4 +776,5 @@ window.registrationHelpers = {
   toggleConfirmPassword,
   clearAllFieldErrors,
   resetForm
+
 };
