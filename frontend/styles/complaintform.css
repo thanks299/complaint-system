@@ -1,3 +1,9 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   background: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #6c8e7a 100%);
   display: flex;
@@ -18,6 +24,43 @@ body {
   to {
     opacity: 1;
   }
+}
+
+#logoutBtn {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.6rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+#logoutBtn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.3);
+}
+
+#userInfo {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 10;
 }
 
 .container {
@@ -113,9 +156,21 @@ header h4 {
   width: 100%;
 }
 
+label {
+  display: block;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
 .form-container input,
 .form-container textarea,
-.form-container select {
+.form-container select,
+input[type="text"],
+input[type="email"],
+textarea {
   width: 100%;
   border-radius: 12px;
   margin-top: 5px;
@@ -126,11 +181,15 @@ header h4 {
   box-sizing: border-box;
   background-color: #f8f9fa;
   transition: all 0.3s ease;
+  font-family: inherit;
 }
 
 .form-container input:focus,
 .form-container textarea:focus,
-.form-container select:focus {
+.form-container select:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
   outline: none;
   border-color: #4a7c59;
   background-color: white;
@@ -184,6 +243,50 @@ select {
   margin-top: 5px;
   margin-bottom: 15px;
   display: none;
+}
+
+.error.show {
+  display: block;
+}
+
+#myComplaintsSection {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  margin-top: 2rem;
+}
+
+#myComplaintsSection h3 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+#myComplaintsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#myComplaintsTable th {
+  background: #ecf0f1;
+  color: #2c3e50;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #bdc3c7;
+  font-size: 0.95rem;
+}
+
+#myComplaintsTable td {
+  padding: 1rem;
+  border-bottom: 1px solid #ecf0f1;
+  color: #34495e;
+}
+
+#myComplaintsTable tr:hover {
+  background: #f9f9f9;
 }
 
 /* Media Queries for Responsiveness */
@@ -270,7 +373,6 @@ select {
   }
 }
 
-/* Tablet breakpoint for better medium screen experience */
 @media (min-width: 481px) and (max-width: 768px) {
   .container {
     max-width: 600px;
