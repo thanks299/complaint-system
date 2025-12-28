@@ -387,26 +387,17 @@ class APIService {
 
   /**
    * Create a new complaint
-   * @param {object} data - Complaint data
+   * @param {object} complaintdata - Complaint data
    * @returns {Promise} - Promise that resolves to created complaint
    */
-  async createComplaint(data) {
+  async createComplaint(complaintData) {
     try {
-      return await this.request('POST', '/complaints', data);
+      console.log('📝 Creating complaint...');
+      const response = await this.request('POST', '/complaintform', complaintData);
+      console.log('✅ Complaint created successfully:', response);
+      return response;
     } catch (error) {
-      if (error.offline && this.fallbackEnabled) {
-        // Create mock response for development
-        return {
-          success: true,
-          message: 'Complaint submitted successfully (Development Mode)',
-          complaint: {
-            id: 'NACOS-' + Math.floor(Math.random() * 10000),
-            ...data,
-            status: 'Pending',
-            created_at: new Date().toISOString()
-          }
-        };
-      }
+      console.error('❌ Error creating complaint:', error);
       throw error;
     }
   }
