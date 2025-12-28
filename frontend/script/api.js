@@ -5,7 +5,7 @@
 class APIService {
   constructor() {
     // Base URL for your backend API
-    this.apiBaseUrl = 'https://complaint-system-1os4.onrender.com/api';
+    this.apiBaseUrl = 'https://complaint-system-1ycs.onrender.com/api';
     
     // For local development, optionally switch to localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
