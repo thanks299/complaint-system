@@ -1,148 +1,130 @@
-const supabase = require('./supabase-config');
+const mongoose = require('mongoose');
+require('./mongodb-config');
+const User = require('./models/User');
+const Admin = require('./models/Admin');
+const Complaint = require('./models/Complaint');
 
-console.log('🔧 Loading database module...');
-console.log('Supabase client type:', typeof supabase);
-console.log('Supabase has from method:', typeof supabase?.from);
+console.log('🔧 Loading MongoDB database module...');
 
-// Export the Supabase client directly for modern usage
-module.exports = supabase;
+// Export MongoDB models and utilities
+module.exports = {
+  User,
+  Admin,
+  Complaint,
+  mongoose,
 
-// Also export the legacy wrapper for backward compatibility
-module.exports.legacy = {
-  // Get all records from a table
-  async all(query, params = []) {
-    try {
-      // For basic SELECT * queries
-      if (query.includes('SELECT * FROM complaints')) {
-        const { data, error } = await supabase
-          .from('complaints')
-          .select('*');
-        if (error) throw error;
-        return data;
+  // Legacy wrapper for backward compatibility
+  legacy: {
+    // Get all records from a collection
+    async all(query, params = []) {
+      try {
+        if (query.includes('SELECT * FROM complaints')) {
+          return await Complaint.find({});
+        }
+        if (query.includes('SELECT * FROM users')) {
+          return await User.find({});
+        }
+        if (query.includes('SELECT * FROM admins')) {
+          return await Admin.find({});
+        }
+        throw new Error('Query not implemented yet');
+      } catch (error) {
+        throw error;
       }
-      throw new Error('Query not implemented yet');
-    } catch (error) {
-      throw error;
-    }
-  },
+    },
 
-  // Get a single record
-  async get(query, params = []) {
-    try {
-      if (query.includes('SELECT * FROM users WHERE email = ?')) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', params[0])
-          .single();
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
-        return data;
+    // Get a single record
+    async get(query, params = []) {
+      try {
+        if (query.includes('SELECT * FROM users WHERE email = ?')) {
+          return await User.findOne({ email: params[0] });
+        }
+        
+        if (query.includes('SELECT * FROM admins WHERE username = ? OR email = ?')) {
+          return await Admin.findOne({
+            $or: [
+              { username: params[0] },
+              { email: params[1] }
+            ]
+          });
+        }
+
+        if (query.includes('SELECT * FROM users WHERE username = ? OR email = ?')) {
+          return await User.findOne({
+            $or: [
+              { username: params[0] },
+              { email: params[1] }
+            ]
+          });
+        }
+
+        if (query.includes('SELECT * FROM admins WHERE (username = ? OR email = ?) AND password = ?')) {
+          return await Admin.findOne({
+            $or: [
+              { username: params[0] },
+              { email: params[0] }
+            ],
+            password: params[2]
+          });
+        }
+
+        if (query.includes('SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?')) {
+          return await User.findOne({
+            $or: [
+              { username: params[0] },
+              { email: params[0] }
+            ],
+            password: params[2]
+          });
+        }
+
+        throw new Error('Query not implemented yet');
+      } catch (error) {
+        throw error;
       }
-      
-      if (query.includes('SELECT * FROM admins WHERE username = ? OR email = ?')) {
-        const { data, error } = await supabase
-          .from('admins')
-          .select('*')
-          .or(`username.eq.${params[0]},email.eq.${params[1]}`);
-        if (error) throw error;
-        return data && data.length > 0 ? data[0] : null;
-      }
+    },
 
-      if (query.includes('SELECT * FROM users WHERE username = ? OR email = ?')) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .or(`username.eq.${params[0]},email.eq.${params[1]}`);
-        if (error) throw error;
-        return data && data.length > 0 ? data[0] : null;
-      }
-
-      if (query.includes('SELECT * FROM admins WHERE (username = ? OR email = ?) AND password = ?')) {
-        const { data, error } = await supabase
-          .from('admins')
-          .select('*')
-          .or(`username.eq.${params[0]},email.eq.${params[0]}`)
-          .eq('password', params[2]);
-        if (error) throw error;
-        return data && data.length > 0 ? data[0] : null;
-      }
-
-      if (query.includes('SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?')) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .or(`username.eq.${params[0]},email.eq.${params[0]}`)
-          .eq('password', params[2]);
-        if (error) throw error;
-        return data && data.length > 0 ? data[0] : null;
-      }
-
-      throw new Error('Query not implemented yet');
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Insert or update records
-  async run(query, params = []) {
-    try {
-      if (query.includes('INSERT INTO admins')) {
-        const { data, error } = await supabase
-          .from('admins')
-          .insert([{
+    // Insert or update records
+    async run(query, params = []) {
+      try {
+        if (query.includes('INSERT INTO admins')) {
+          const admin = new Admin({
             username: params[0],
             password: params[1],
             email: params[2]
-          }])
-          .select()
-          .single();
-        if (error) throw error;
-        return { lastID: data.id };
-      }
+          });
+          const saved = await admin.save();
+          return { lastID: saved._id };
+        }
 
-      if (query.includes('INSERT INTO users')) {
-        const { data, error } = await supabase
-          .from('users')
-          .insert([{
-            firstname: params[0],
-            lastname: params[1],
-            regno: params[2],
-            email: params[3],
+        if (query.includes('INSERT INTO users')) {
+          const user = new User({
             username: params[4],
+            email: params[3],
             password: params[5],
-            role: params[6]
-          }])
-          .select()
-          .single();
-        if (error) throw error;
-        return { lastID: data.id };
-      }
+            fullName: `${params[0]} ${params[1]}`
+          });
+          const saved = await user.save();
+          return { lastID: saved._id };
+        }
 
-      if (query.includes('INSERT INTO complaints')) {
-        const { data, error } = await supabase
-          .from('complaints')
-          .insert([{
-            name: params[0],
-            matric: params[1],
-            email: params[2],
-            department: params[3],
+        if (query.includes('INSERT INTO complaints')) {
+          const complaint = new Complaint({
             title: params[4],
-            details: params[5],
+            description: params[5],
             status: params[6],
-            date: params[7]
-          }])
-          .select()
-          .single();
-        if (error) throw error;
-        return { lastID: data.id };
-      }
+            createdAt: params[7]
+          });
+          const saved = await complaint.save();
+          return { lastID: saved._id };
+        }
 
-      throw new Error('Query not implemented yet');
-    } catch (error) {
-      throw error;
+        throw new Error('Query not implemented yet');
+      } catch (error) {
+        throw error;
+      }
     }
   }
 };
 
-console.log('✅ Database module loaded successfully');
-console.log('Exported Supabase client with from method:', typeof module.exports.from);
+console.log('✅ MongoDB database module loaded successfully');

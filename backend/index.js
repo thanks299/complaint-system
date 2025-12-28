@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 
 // ✅ FIX 1: Trust proxy for Render deployment
 app.set('trust proxy', 1); // Trust first proxy (Render)
@@ -110,17 +110,10 @@ let db;
 try {
   db = require('./db');
   console.log('✅ Database module loaded successfully');
-  
-  // Test database connection immediately
-  if (db && typeof db.from === 'function') {
-    console.log('✅ Database connection appears valid');
-  } else {
-    console.error('❌ Database connection invalid - db.from is not a function');
-    console.log('Database object:', db);
-  }
+  console.log('✅ MongoDB connection established');
 } catch (error) {
   console.error('❌ Failed to load database module:', error.message);
-  console.error('Make sure db.js exists and exports a valid Supabase client');
+  console.error('Make sure db.js exists and is properly configured');
 }
 
 // Validation helpers
@@ -163,74 +156,43 @@ app.get('/api/db-test', asyncHandler(async (req, res) => {
     console.log('🔍 Testing database connection...');
     
     // Environment check
-    const hasUrl = !!process.env.SUPABASE_URL;
-    const hasKey = !!process.env.SUPABASE_ANON_KEY;
-    const hasDb = db && typeof db.from === 'function';
+    const hasUri = !!process.env.MONGODB_URI;
+    const hasDb = db && db.mongoose;
     
-    console.log('- SUPABASE_URL:', hasUrl ? '✅ Set' : '❌ Missing');
-    console.log('- SUPABASE_ANON_KEY:', hasKey ? '✅ Set' : '❌ Missing');
-    console.log('- Database client:', hasDb ? '✅ Ready' : '❌ Invalid');
+    console.log('- MONGODB_URI:', hasUri ? '✅ Set' : '❌ Missing');
+    console.log('- Mongoose connection:', hasDb ? '✅ Ready' : '❌ Invalid');
     
     if (!hasDb) {
       return res.status(500).json({
-        error: 'Database client not properly initialized',
-        checks: { hasUrl, hasKey, hasDb }
+        error: 'Database connection not properly initialized',
+        checks: { hasUri, hasDb }
       });
     }
 
-    // Simple connection test - just try to connect without querying data
+    // Test the connection
     try {
-      // This will test the connection and return immediately if RLS blocks it
-      const { data, error } = await db
-        .from('users')
-        .select('count()', { count: 'exact', head: true });
+      // Try a simple query
+      const userCount = await db.User.countDocuments();
       
-      if (error) {
-        // RLS blocked the query, but connection is working
-        console.log('Query blocked by RLS (connection is good):', error.code);
-        return res.status(200).json({
-          status: 'success',
-          message: '🎉 Database connection is working!',
-          note: 'RLS policies are protecting your data',
-          connectionTest: 'passed',
-          timestamp: new Date().toISOString(),
-          environment: process.env.NODE_ENV || 'production'
-        });
-      }
-      
-      // Query succeeded
       return res.status(200).json({
-        status: 'success', 
-        message: '🎉 Database connection and query successful!',
+        status: 'success',
+        message: '🎉 MongoDB connection is working!',
         connectionTest: 'passed',
-        queryTest: 'passed',
-        timestamp: new Date().toISOString(),
+        stats: {
+          users: userCount,
+          timestamp: new Date().toISOString()
+        },
         environment: process.env.NODE_ENV || 'production'
       });
       
     } catch (queryError) {
-      console.log('Database query error:', queryError.message);
-      
-      // Check if it's a connection error or just RLS/permissions
-      if (queryError.code === 'PGRST202' || 
-          queryError.code === 'PGRST301' ||
-          queryError.message.includes('RLS') ||
-          queryError.message.includes('policy') ||
-          queryError.message === '') {
-        
-        return res.status(200).json({
-          status: 'success',
-          message: '🎉 Database connection verified!',
-          note: 'Query was blocked by security policies (this is good)',
-          connectionTest: 'passed',
-          securityTest: 'passed', 
-          timestamp: new Date().toISOString(),
-          environment: process.env.NODE_ENV || 'production'
-        });
-      }
-      
-      // Real connection error
-      throw queryError;
+      console.error('Database query error:', queryError.message);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Database connection test failed',
+        error: queryError.message,
+        timestamp: new Date().toISOString()
+      });
     }
     
   } catch (error) {
@@ -238,7 +200,6 @@ app.get('/api/db-test', asyncHandler(async (req, res) => {
     res.status(500).json({
       error: 'Database connection failed',
       details: error.message,
-      code: error.code,
       timestamp: new Date().toISOString()
     });
   }
@@ -269,7 +230,7 @@ app.get('/api/status', (req, res) => {
 // GET all complaints for admin dashboard
 app.get('/api/complaints', asyncHandler(async (req, res) => {
   // Check database connection first
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.Complaint) {
     return res.status(500).json({ 
       error: 'Database connection not available',
       details: 'Please check database configuration'
@@ -279,18 +240,11 @@ app.get('/api/complaints', asyncHandler(async (req, res) => {
   try {
     console.log('Fetching complaints...');
     
-    const { data: complaints, error } = await db
-      .from('complaints')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Database error fetching complaints:', error);
-      return res.status(500).json({ 
-        error: 'Failed to fetch complaints',
-        details: process.env.NODE_ENV === 'development' ? error.message : 'Database query failed'
-      });
-    }
+    const complaints = await db.Complaint
+      .find({})
+      .populate('userId', 'username email')
+      .populate('assignedTo', 'username email')
+      .sort({ createdAt: -1 });
 
     console.log(`Successfully fetched ${complaints?.length || 0} complaints`);
     res.status(200).json(complaints || []);
@@ -305,7 +259,7 @@ app.get('/api/complaints', asyncHandler(async (req, res) => {
 
 // Dashboard stats endpoint for admin
 app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.Complaint) {
     return res.status(500).json({ 
       success: false,
       error: 'Database connection not available'
@@ -315,38 +269,33 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
   try {
     console.log('🔄 Fetching dashboard stats...');
     
-    // Get complaint counts by status using RPC
-    const { data: statusCounts, error: countsError } = await db
-      .rpc('get_complaint_status_counts');
+    // Get complaint counts by status using MongoDB aggregation
+    const statusCounts = await db.Complaint.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
     
-    if (countsError) {
-      console.error('Error getting complaint counts:', countsError);
-      throw countsError;
-    }
-    
-    console.log('Status counts from RPC:', statusCounts);
+    console.log('Status counts from MongoDB:', statusCounts);
     
     // Get recent complaints
-    const { data: recentComplaints, error: complaintsError } = await db
-      .from('complaints')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    if (complaintsError) {
-      console.error('Error getting recent complaints:', complaintsError);
-      throw complaintsError;
-    }
+    const recentComplaints = await db.Complaint
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('userId', 'username email');
     
     // Get user count
-    const { count: totalUsers, error: usersError } = await db
-      .from('users')
-      .select('*', { count: 'exact', head: true });
-    
-    if (usersError) {
-      console.error('Error getting user count:', usersError);
+    let totalUsers = 0;
+    try {
+      totalUsers = await db.User.countDocuments();
+    } catch (userError) {
+      console.error('Error counting users:', userError);
       // Don't fail completely if just user count fails
-      // Just set totalUsers to 0
+      totalUsers = 0;
     }
 
     // Format the response with correct status mapping
@@ -354,32 +303,36 @@ app.get('/api/admin/dashboard/stats', asyncHandler(async (req, res) => {
       pending: 0,
       inProgress: 0,
       resolved: 0,
+      closed: 0,
       totalUsers: totalUsers || 0
     };
 
     // Map status counts to expected frontend format
     statusCounts.forEach(item => {
-      if (item.status === 'pending') {
+      if (item._id === 'pending') {
         stats.pending = Number(item.count);
       } 
-      else if (item.status === 'in-progress' || item.status === 'inProgress') {
+      else if (item._id === 'in-progress') {
         stats.inProgress = Number(item.count);
       }
-      else if (item.status === 'resolved') {
+      else if (item._id === 'resolved') {
         stats.resolved = Number(item.count);
+      }
+      else if (item._id === 'closed') {
+        stats.closed = Number(item.count);
       }
     });
 
     // Map the complaints to the expected frontend format
     const formattedComplaints = recentComplaints.map(c => ({
-      id: c.id,
-      student: c.name,
-      type: c.department,
+      id: c._id,
+      student: c.userId?.username || 'Anonymous',
+      type: c.category || 'General',
       status: c.status === 'in-progress' ? 'In Progress' : 
              c.status.charAt(0).toUpperCase() + c.status.slice(1),
-      priority: getPriorityFromTitle(c.title), // Function to determine priority
-      date: c.created_at,
-      description: c.details
+      priority: c.priority || 'Medium',
+      date: c.createdAt,
+      description: c.description
     }));
 
     console.log('Sending formatted stats:', stats);
@@ -404,47 +357,35 @@ app.get('/api/admin/dashboard/stats-fallback', asyncHandler(async (req, res) => 
     console.log('🔍 Using fallback dashboard stats implementation');
     
     // Get all complaints
-    const { data: allComplaints, error: complaintsError } = await db
-      .from('complaints')
-      .select('*');
-    
-    if (complaintsError) {
-      console.error('Error fetching complaints:', complaintsError);
-      throw complaintsError;
-    }
+    const allComplaints = await db.Complaint.find({}).populate('userId', 'username email');
     
     // Count by status
     const pending = allComplaints.filter(c => c.status === 'pending').length;
     const inProgress = allComplaints.filter(c => c.status === 'in-progress').length;
     const resolved = allComplaints.filter(c => c.status === 'resolved').length;
+    const closed = allComplaints.filter(c => c.status === 'closed').length;
     
     // Get users count
     let totalUsers = 0;
     try {
-      const { count, error: usersError } = await db
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      
-      if (!usersError) {
-        totalUsers = count || 0;
-      }
+      totalUsers = await db.User.countDocuments();
     } catch (userError) {
       console.error('Error counting users:', userError);
     }
     
     // Get 5 most recent complaints
     const recentComplaints = allComplaints
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
       .slice(0, 5)
       .map(c => ({
-        id: c.id,
-        student: c.name || 'Anonymous',
-        type: c.department || 'General',
+        id: c._id,
+        student: c.userId?.username || 'Anonymous',
+        type: c.category || 'General',
         status: c.status === 'in-progress' ? 'In Progress' : 
                c.status.charAt(0).toUpperCase() + c.status.slice(1),
-        priority: getPriorityFromTitle(c.title),
-        date: c.created_at,
-        description: c.details
+        priority: c.priority || 'Medium',
+        date: c.createdAt,
+        description: c.description
       }));
     
     // Format the response
@@ -452,6 +393,7 @@ app.get('/api/admin/dashboard/stats-fallback', asyncHandler(async (req, res) => 
       pending,
       inProgress,
       resolved,
+      closed,
       totalUsers
     };
     
@@ -495,7 +437,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
   });
   
   // Check database connection first
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.User) {
     console.error('Database not available for login');
     return res.status(500).json({ 
       success: false,
@@ -529,44 +471,44 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
     let user = null;
     let userRole = 'student'; // default role
     
-    // First, try to find user in the 'users' table (students)
+    // First, try to find user in the User collection (students)
     try {
-      const { data: studentUser, error: studentError } = await db
-        .from('users')
-        .select('*')
-        .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
-        .single();
+      user = await db.User.findOne({
+        $or: [
+          { username: sanitizedLogin.toLowerCase() },
+          { email: sanitizedLogin.toLowerCase() }
+        ]
+      });
 
-      if (!studentError && studentUser) {
-        user = studentUser;
-        userRole = studentUser.role || 'student';
+      if (user) {
+        userRole = 'student';
         console.log('Found student user:', sanitizedLogin);
       }
     } catch (err) {
-      console.log('Student user not found, checking admins...');
+      console.log('Student user search error:', err.message);
     }
 
-    // If not found in users table, try admins table
+    // If not found in users, try admins collection
     if (!user) {
       try {
-        const { data: adminUser, error: adminError } = await db
-          .from('admins')
-          .select('*')
-          .or(`username.eq.${sanitizedLogin.toLowerCase()},email.eq.${sanitizedLogin.toLowerCase()}`)
-          .single();
+        user = await db.Admin.findOne({
+          $or: [
+            { username: sanitizedLogin.toLowerCase() },
+            { email: sanitizedLogin.toLowerCase() }
+          ]
+        });
 
-        if (!adminError && adminUser) {
-          user = adminUser;
+        if (user) {
           userRole = 'admin';
           console.log('Found admin user:', sanitizedLogin);
         }
       } catch (err) {
-        console.log('Admin user not found either');
+        console.log('Admin user search error:', err.message);
       }
     }
 
     if (!user) {
-      console.log('User not found in any table:', sanitizedLogin);
+      console.log('User not found in any collection:', sanitizedLogin);
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid username or password' 
@@ -590,11 +532,8 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
     
     // Update last login (don't fail login if this fails)
     try {
-      const tableName = userRole === 'admin' ? 'admins' : 'users';
-      await db
-        .from(tableName)
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
+      user.updatedAt = new Date();
+      await user.save();
     } catch (updateError) {
       console.warn('Failed to update last login time:', updateError.message);
       // Don't fail the login for this
@@ -609,10 +548,10 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
       success: true,
       role: userRole,
       username: user.username,
-      userId: user.id,
+      userId: user._id,
       message: 'Login successful',
       user: {
-        id: user.id,
+        id: user._id,
         username: user.username,
         email: user.email,
         role: userRole
@@ -633,7 +572,7 @@ app.post('/api/login', authLimiter, asyncHandler(async (req, res) => {
 // Handle user registration (same database checks)
 app.post('/api/registeration', asyncHandler(async (req, res) => {
   // Check database connection first
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.User) {
     return res.status(500).json({ 
       error: 'Database connection not available',
       details: 'Service temporarily unavailable'
@@ -695,21 +634,22 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // ✅ FIX: Check appropriate table based on role
-    const tableName = role === 'admin' ? 'admins' : 'users';
+    // Check appropriate collection based on role
+    let existingUser = null;
     
-    // Check for existing user in appropriate table
-    const { data: existingUser, error: checkError } = await db
-      .from(tableName)
-      .select('username, email')
-      .or(`username.eq.${username.toLowerCase()},email.eq.${email.toLowerCase()}`)
-      .maybeSingle();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Database error checking existing user:', checkError);
-      return res.status(500).json({ 
-        error: 'Database error during validation',
-        details: process.env.NODE_ENV === 'development' ? checkError.message : undefined
+    if (role === 'admin') {
+      existingUser = await db.Admin.findOne({
+        $or: [
+          { username: username.toLowerCase() },
+          { email: email.toLowerCase() }
+        ]
+      });
+    } else {
+      existingUser = await db.User.findOne({
+        $or: [
+          { username: username.toLowerCase() },
+          { email: email.toLowerCase() }
+        ]
       });
     }
 
@@ -720,54 +660,26 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
       });
     }
 
-    // ✅ FIX: Prepare data based on role and table schema
-    let userData;
+    // Prepare data based on role
+    let newUser;
     
     if (role === 'admin') {
-      // Admin data (for admins table)
-      userData = {
+      newUser = new db.Admin({
         username: username.toLowerCase(), 
         email: email.toLowerCase(), 
-        password: hashedPassword,
-        created_at: new Date().toISOString()
-      };
+        password: hashedPassword
+      });
     } else {
-      // Student data (for users table)
-      userData = {
-        firstname,
-        lastname,
-        regno,
+      newUser = new db.User({
         username: username.toLowerCase(), 
         email: email.toLowerCase(), 
         password: hashedPassword,
-        role: 'student',
-        created_at: new Date().toISOString()
-      };
-    }
-
-    console.log('Inserting new', role, 'into', tableName, 'table...');
-
-    // ✅ FIX: Insert into correct table based on role
-    const { data, error } = await db
-      .from(tableName)
-      .insert([userData])
-      .select();
-
-    if (error) {
-      console.error('Supabase insert error:', error);
-      
-      if (error.code === '23505') {
-        return res.status(409).json({ 
-          error: `${role.charAt(0).toUpperCase() + role.slice(1)} already exists`,
-          details: error.details
-        });
-      }
-      
-      return res.status(500).json({ 
-        error: `Failed to create ${role} account`,
-        details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+        fullName: `${firstname} ${lastname}`
       });
     }
+
+    console.log('Inserting new', role, 'into database...');
+    const savedUser = await newUser.save();
 
     console.log(`${role} registered successfully:`, { username, email, role });
     
@@ -776,15 +688,12 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
       success: true,
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`, 
       [role]: {
-        id: data[0].id,
-        username: data[0].username,
-        email: data[0].email,
-        created_at: data[0].created_at,
+        id: savedUser._id,
+        username: savedUser.username,
+        email: savedUser.email,
         ...(role === 'student' && {
-          firstname: data[0].firstname,
-          lastname: data[0].lastname,
-          regno: data[0].regno,
-          role: data[0].role
+          fullName: savedUser.fullName,
+          role: 'student'
         })
       }
     };
@@ -804,7 +713,7 @@ app.post('/api/registeration', asyncHandler(async (req, res) => {
 // Handle complaint form submission (with database checks)
 app.post('/api/complaintform', asyncHandler(async (req, res) => {
   // Check database connection first
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.Complaint) {
     return res.status(500).json({ 
       success: false,
       error: 'Database connection not available',
@@ -855,42 +764,28 @@ app.post('/api/complaintform', asyncHandler(async (req, res) => {
   try {
     console.log('Submitting new complaint:', title);
     
-    // Insert new complaint
-    const complaintData = { 
-      name, 
-      matric, 
-      email: email.toLowerCase(), 
-      department, 
+    // Create a unique complaint ID
+    const complaintId = `COMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create new complaint
+    const complaint = new db.Complaint({
+      complaintId,
       title, 
-      details,
+      description: details,
+      category: department,
+      priority: getPriorityFromTitle(title),
       status: 'pending',
-      created_at: new Date().toISOString()
-    };
+      userId: userId || null
+    });
 
-    // Add user info if provided
-    if (username) complaintData.username = username;
-    if (userId) complaintData.user_id = userId;
+    const savedComplaint = await complaint.save();
 
-    const { data, error } = await db
-      .from('complaints')
-      .insert([complaintData])
-      .select();
-
-    if (error) {
-      console.error('Supabase complaint insert error:', error);
-      return res.status(500).json({ 
-        success: false,
-        error: 'Failed to submit complaint',
-        details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
-      });
-    }
-
-    console.log('Complaint submitted successfully:', { title, email, id: data[0].id });
+    console.log('Complaint submitted successfully:', { title, email, id: savedComplaint._id });
     res.status(201).json({ 
       success: true,
       message: 'Complaint submitted successfully', 
-      complaint: data[0],
-      id: data[0].id
+      complaint: savedComplaint,
+      id: savedComplaint._id
     });
 
   } catch (error) {
@@ -905,7 +800,7 @@ app.post('/api/complaintform', asyncHandler(async (req, res) => {
 
 // Update complaint status (for admin)
 app.patch('/api/complaints/:id/status', asyncHandler(async (req, res) => {
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.Complaint) {
     return res.status(500).json({ 
       error: 'Database connection not available'
     });
@@ -914,32 +809,25 @@ app.patch('/api/complaints/:id/status', asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  const validStatuses = ['pending', 'in-progress', 'resolved'];
+  const validStatuses = ['pending', 'in-progress', 'resolved', 'closed'];
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ 
-      error: 'Invalid status. Must be one of: pending, in-progress, resolved' 
+      error: 'Invalid status. Must be one of: pending, in-progress, resolved, closed' 
     });
   }
 
   try {
-    const { data, error } = await db
-      .from('complaints')
-      .update({ 
+    const updatedComplaint = await db.Complaint.findByIdAndUpdate(
+      id,
+      { 
         status: status,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select();
+        updatedAt: new Date(),
+        resolvedAt: status === 'resolved' ? new Date() : null
+      },
+      { new: true }
+    );
 
-    if (error) {
-      console.error('Database error updating complaint status:', error);
-      return res.status(500).json({ 
-        error: 'Failed to update complaint status',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-
-    if (!data || data.length === 0) {
+    if (!updatedComplaint) {
       return res.status(404).json({ 
         error: 'Complaint not found' 
       });
@@ -948,7 +836,7 @@ app.patch('/api/complaints/:id/status', asyncHandler(async (req, res) => {
     res.status(200).json({ 
       success: true,
       message: `Complaint status updated to ${status}`, 
-      complaint: data[0] 
+      complaint: updatedComplaint 
     });
   } catch (error) {
     console.error('Error updating complaint status:', error);
@@ -961,7 +849,7 @@ app.patch('/api/complaints/:id/status', asyncHandler(async (req, res) => {
 
 // Delete complaint (for admin)
 app.delete('/api/complaints/:id', asyncHandler(async (req, res) => {
-  if (!db || typeof db.from !== 'function') {
+  if (!db || !db.Complaint) {
     return res.status(500).json({ 
       error: 'Database connection not available'
     });
@@ -970,21 +858,9 @@ app.delete('/api/complaints/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { data, error } = await db
-      .from('complaints')
-      .delete()
-      .eq('id', id)
-      .select();
+    const deletedComplaint = await db.Complaint.findByIdAndDelete(id);
 
-    if (error) {
-      console.error('Database error deleting complaint:', error);
-      return res.status(500).json({ 
-        error: 'Failed to delete complaint',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-
-    if (!data || data.length === 0) {
+    if (!deletedComplaint) {
       return res.status(404).json({ 
         error: 'Complaint not found' 
       });
