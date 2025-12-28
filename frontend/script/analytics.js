@@ -2,7 +2,8 @@
  * Analytics Controller for the NACOS Complaint System
  * Handles data visualization, reporting, and analytics features
  */
-class AnalyticsController {
+if (!window.AnalyticsController) {
+    window.AnalyticsController = class AnalyticsController {
     constructor() {
         this.initialized = false;
         this.charts = {};
@@ -802,6 +803,7 @@ class AnalyticsController {
             text: message
         });
     }
+    };
 }
 
 // Initialize when the page content has loaded
@@ -811,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Only initialize if not already initialized
             if (!window.analyticsController) {
                 console.log('📊 Initializing Analytics Controller');
-                window.analyticsController = new AnalyticsController();
+                window.analyticsController = new window.AnalyticsController();
                 
                 // If we're already on the analytics section, initialize it
                 if (document.querySelector('.section-title')?.textContent.includes('Analytics')) {

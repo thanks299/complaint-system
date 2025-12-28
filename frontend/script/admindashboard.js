@@ -198,11 +198,26 @@ class AdminDashboard {
     
     // Update statistics UI elements
     updateStatsUI() {
-        // Update count elements
-        document.getElementById('pending-count').textContent = this.stats.pending;
-        document.getElementById('inprogress-count').textContent = this.stats.inProgress;
-        document.getElementById('resolved-count').textContent = this.stats.resolved;
-        document.getElementById('total-users').textContent = this.stats.totalUsers;
+        // Update count elements with null checks
+        const pendingEl = document.getElementById('pending-count');
+        if (pendingEl) {
+            pendingEl.textContent = this.stats.pending;
+        }
+        
+        const inProgressEl = document.getElementById('inprogress-count');
+        if (inProgressEl) {
+            inProgressEl.textContent = this.stats.inProgress;
+        }
+        
+        const resolvedEl = document.getElementById('resolved-count');
+        if (resolvedEl) {
+            resolvedEl.textContent = this.stats.resolved;
+        }
+        
+        const totalUsersEl = document.getElementById('total-users');
+        if (totalUsersEl) {
+            totalUsersEl.textContent = this.stats.totalUsers;
+        }
     }
     
     // Update recent complaints table

@@ -381,8 +381,8 @@ class NavigationController {
             console.log(`🔄 Fetching content for ${sectionName}`);
             
             try {
-                // Fetch the section content
-                const response = await fetch(`./${sectionName}.html`);
+                // Fetch the section content from views folder
+                const response = await fetch(`../views/${sectionName}.html`);
                 
                 if (!response.ok) {
                     throw new Error(`Failed to load ${sectionName}.html: ${response.status} ${response.statusText}`);
@@ -390,9 +390,15 @@ class NavigationController {
                 
                 content = await response.text();
                 
-                // Cache the content with timestamp
-                this.sectionCache[sectionName] = content;
+                // Extract only the body content to avoid nested HTML structure
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+                const bodyContent = doc.body.innerHTML;
+                
+                // Cache the extracted content with timestamp
+                this.sectionCache[sectionName] = bodyContent;
                 this.cacheTimestamps[sectionName] = Date.now();
+                content = bodyContent;
             } catch (error) {
                 console.error(`Error loading ${sectionName} content:`, error);
                 throw error;

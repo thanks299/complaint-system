@@ -20,6 +20,10 @@
     <link rel="stylesheet" href="./styles/admin.css">
     <link rel="stylesheet" href="./styles/navigation.css">
     <link rel="stylesheet" href="./styles/responsive.css">
+
+    <!-- Core JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -108,10 +112,10 @@
                 
                 <div class="nav-right">
                     <div class="search-container">
-                        <div class="search-box">
-                            <input type="text" class="search-input" placeholder="Search...">
-                            <i class="fas fa-search"></i>
-                        </div>
+                      <div class="search-box">
+                        <input type="text" class="search-input" placeholder="Search...">
+                        <i class="fas fa-search" style="margin-left: 250px;"></i>
+                      </div>
                     </div>
                     
                     <div class="nav-actions">
@@ -157,7 +161,7 @@
                         <i class="fas fa-chart-line"></i>
                         Dashboard Overview
                     </h1>
-                    <p class="section-subtitle">Welcome back! Here's what's happening with your complaints system.</p>
+                    <p class="section-subtitle">Welcome back! </p>
                 </div>
 
                 <!-- Stats Grid -->
@@ -357,10 +361,6 @@
         </main>
     </div>
 
-    <!-- Core JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- Authentication Helper (Add this before other scripts) -->
     <script>
         // Simple authentication setup for development/testing
@@ -380,13 +380,6 @@
             }
         })();
     </script>
-
-    <!-- Application Scripts -->
-    <script src="script/api.js"></script>
-    <script src="script/navigation.js"></script>
-    <script src="script/settings.js"></script>
-    <script src="script/analytics.js"></script>
-    <script src="script/admindashboard.js"></script>
 
     <!-- Sidebar Navigation Fix -->
     <script>
@@ -1339,6 +1332,13 @@
   // Initialize the controller and make it available globally
   window.analyticsController = new AnalyticsController();
   console.log('Analytics Controller registered globally');
-</script>
+    </script>
+
+    <!-- Application Scripts -->
+    <script src="script/api.js"></script>
+    <script src="script/navigation.js"></script>
+    <script src="script/settings.js"></script>
+    <script src="script/analytics.js"></script>
+    <script src="script/admindashboard.js"></script>
 </body>
 </html>
