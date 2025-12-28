@@ -4,10 +4,10 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const morgan = require('morgan');
-require('dotenv').config();
-
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+require('dotenv').config();
 
 // ✅ FIX 1: Trust proxy for Render deployment
 app.set('trust proxy', 1); // Trust first proxy (Render)

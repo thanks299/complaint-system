@@ -462,7 +462,7 @@
                         `./views/${section}.html`,
                         `../views/${section}.html`,
                         `./frontend/views/${section}.html`,
-                        `./${section}.html`
+                        `${section}.html`
                     ];
 
                     for (const path of possiblePaths) {
@@ -814,20 +814,20 @@
     </script>
 
     <!-- Analytics Controller -->
-<script>
-  // Analytics Controller
-  class AnalyticsController {
-    constructor() {
-      this.charts = {};
-      console.log('Analytics Controller initialized');
-    }
+    <script>
+      // Analytics Controller
+      class AnalyticsController {
+        constructor() {
+          this.charts = {};
+          console.log('Analytics Controller initialized');
+        }
 
-    // Initialize analytics dashboard
-    initialize() {
-      console.log('Initializing analytics dashboard...');
+        // Initialize analytics dashboard
+        initialize() {
+          console.log('Initializing analytics dashboard...');
       
-      // Set up analytics layout
-      this.setupLayout();
+          // Set up analytics layout
+          this.setupLayout();
       
       // Load analytics data
       this.loadAnalyticsData();
